@@ -21,7 +21,9 @@ interface PetApi {
   getState(): Promise<{ bounds: Rect; workArea: Rect }>;
   workAreaAt(x: number, y: number): Promise<Rect>;
   setPosition(x: number, y: number): void;
-  setIgnoreMouse(ignore: boolean): void;
+  setHitRect(r: Rect): void;
+  setDragging(dragging: boolean): void;
+  onHover(cb: (over: boolean) => void): void;
   showMenu(): void;
   setTrayIcon(dataUrl: string): void;
   onDisplayChanged(cb: () => void): void;

@@ -34,6 +34,7 @@ function syncSize(): void {
   canvas.width = Math.round(W * dpr);
   canvas.height = Math.round(H * dpr);
   ctx.imageSmoothingEnabled = false;
+  sendHitRect();
 }
 
 let pet!: PetDef;
@@ -208,26 +209,24 @@ function isOverPet(clientX: number, clientY: number): boolean {
   return clientX >= r.x && clientX <= r.x + r.width && clientY >= r.y - 6 && clientY <= r.y + r.height;
 }
 
-function setOverPet(over: boolean): void {
-  if (over === overPet) return;
+/** Tells the main process where the cat is, so it knows when the cursor is over it. */
+function sendHitRect(): void {
+  if (!pet) return;
+  const r = petRect();
+  api.setHitRect({ x: r.x, y: r.y - 6, width: r.width, height: r.height + 6 });
+}
+
+// The main process watches the cursor and tells us when it is over the cat
+// (at that moment the window starts taking clicks).
+api.onHover((over) => {
   overPet = over;
   document.body.classList.toggle('over-pet', over);
-  // When the cursor is over the cat we take clicks; otherwise they go to the app behind.
-  api.setIgnoreMouse(!over);
-}
+});
 
 function petTheCat(): void {
   setState('happy');
   hearts.push({ x: W / 2 + rand(-12, 12), age: 0 });
 }
-
-document.addEventListener('mousemove', (e) => {
-  if (!press) setOverPet(isOverPet(e.clientX, e.clientY));
-});
-
-document.documentElement.addEventListener('mouseleave', () => {
-  if (!press) setOverPet(false);
-});
 
 canvas.addEventListener('pointerdown', (e) => {
   if (e.button !== 0 || !isOverPet(e.clientX, e.clientY)) return;
@@ -245,6 +244,7 @@ canvas.addEventListener('pointermove', (e) => {
   const dy = e.screenY - press.screenY;
   if (!press.dragging && Math.hypot(dx, dy) > DRAG_THRESHOLD) {
     press.dragging = true;
+    api.setDragging(true);
     document.body.classList.add('dragging');
     setState('dragged');
   }
@@ -260,6 +260,7 @@ async function endPress(e: PointerEvent): Promise<void> {
   const wasDragging = press.dragging;
   press = null;
   document.body.classList.remove('dragging');
+  if (wasDragging) api.setDragging(false);
   if (canvas.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId);
 
   if (wasDragging) {
@@ -272,7 +273,6 @@ async function endPress(e: PointerEvent): Promise<void> {
   } else {
     petTheCat();
   }
-  setOverPet(isOverPet(e.clientX, e.clientY));
 }
 
 canvas.addEventListener('pointerup', (e) => void endPress(e));
@@ -309,6 +309,7 @@ async function start(): Promise<void> {
   window.addEventListener('resize', syncSize);
 
   pet = await api.loadPet();
+  sendHitRect();
   await refreshPlacement();
   pos.y = groundY();
   api.setTrayIcon(makeTrayIcon());

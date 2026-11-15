@@ -15,6 +15,37 @@ const petsDir = path.join(rootDir, 'pets');
 let win: BrowserWindow | null = null;
 let tray: Tray | null = null;
 
+// Mouse handling. The window ignores the mouse (clicks go to the app behind it) except
+// while the cursor is over the cat. Windows doesn't reliably forward mouse moves to an
+// ignoring window, so we watch the cursor position from here instead.
+const HOVER_POLL_MS = 33;
+let hitRect = { x: 0, y: 0, width: 0, height: 0 }; // the cat's area inside the window
+let dragging = false;
+let interactive = false;
+
+function setInteractive(next: boolean): void {
+  if (!win || next === interactive) return;
+  interactive = next;
+  win.setIgnoreMouseEvents(!next, { forward: true });
+  win.webContents.send('pet:hover', next);
+}
+
+function pollCursor(): void {
+  if (!win) return;
+  const c = screen.getCursorScreenPoint();
+  const b = win.getBounds();
+  const x = c.x - b.x;
+  const y = c.y - b.y;
+  const over =
+    x >= hitRect.x && x <= hitRect.x + hitRect.width && y >= hitRect.y && y <= hitRect.y + hitRect.height;
+  setInteractive(dragging || over);
+}
+
+function isRect(r: unknown): r is { x: number; y: number; width: number; height: number } {
+  const o = r as { width?: unknown; height?: unknown } | null;
+  return isPoint(r) && Number.isFinite(o?.width) && Number.isFinite(o?.height);
+}
+
 function isPoint(p: unknown): p is { x: number; y: number } {
   const o = p as { x?: unknown; y?: unknown } | null;
   return !!o && Number.isFinite(o.x) && Number.isFinite(o.y);
@@ -101,8 +132,15 @@ function registerIpc(): void {
     if (isPoint(p)) moveTo(p.x, p.y);
   });
 
-  ipcMain.on('pet:setIgnoreMouse', (_e, ignore: unknown) => {
-    if (typeof ignore === 'boolean') win?.setIgnoreMouseEvents(ignore, { forward: true });
+  ipcMain.on('pet:setHitRect', (_e, r: unknown) => {
+    if (isRect(r)) hitRect = r;
+  });
+
+  // While dragging, keep taking mouse input even if the cursor outruns the window.
+  ipcMain.on('pet:setDragging', (_e, d: unknown) => {
+    if (typeof d !== 'boolean') return;
+    dragging = d;
+    pollCursor();
   });
 
   ipcMain.on('pet:showMenu', () => {
@@ -130,6 +168,7 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(() => {
     registerIpc();
     createWindow();
+    setInterval(pollCursor, HOVER_POLL_MS);
     const notify = () => win?.webContents.send('pet:displayChanged');
     screen.on('display-metrics-changed', notify);
     screen.on('display-added', notify);
