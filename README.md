@@ -28,6 +28,22 @@ Emotions are face overlays (neutral, blink, happy, content, sleepy, sad, surpris
 
 State is saved to `save.json` in the app's user-data folder. While the app is closed the cat naps (energy refills) but gets a bit lonely and thirsty; it greets you when you come back.
 
+## Reacting to your day
+
+| What happens | How it's detected | The cat |
+|---|---|---|
+| 50 min of active use without a break | Windows idle time | stretches: "time to stretch! 🧘" (again every 10 min if ignored) |
+| You take a 5+ min break after that | idle time | "nice break! ✨" |
+| 75 min of active use | idle time | sits with a water bowl: "water break? 💧 click me when you drink!" — click it and you drink together |
+| You're away 10+ min or lock the screen | idle time, lock events | falls asleep; wakes up and greets you when you're back |
+| 1–5 AM and you're still on the PC | clock | yawns: "bedtime, human 🌙" (every 30 min) and looks sleepy |
+| You commit | `.git/logs/HEAD` in watched repos | jumps with confetti; first commit of the day grows your 🔥 streak |
+| You push | `.git/logs/refs/remotes/**` | bigger confetti: "pushed! 🚀" |
+
+Only *active* time counts toward reminders. Reminders can be switched off under **Reminders** in the menu.
+On first run it looks for git repos in `~/projects`, `~/code`, `~/repos`, `~/src`, `~/dev`, `~/git` and `~/Documents/GitHub`; add or remove repos under **Watched repos**. Nothing is installed into your repos and nothing leaves your PC.
+Settings live in `settings.json` next to `save.json`.
+
 ## How it's built
 
 | Part | File |
@@ -35,6 +51,10 @@ State is saved to `save.json` in the app's user-data folder. While the app is cl
 | Window, tray, menu, cursor tracking (Electron main process) | `src/main/main.ts` |
 | Loading and validating pets | `src/main/petLoader.ts` |
 | Saving state safely | `src/main/save.ts` |
+| Idle/away/break/water/late-night detection | `src/main/activity.ts` |
+| Watching repos for commits and pushes | `src/main/gitWatcher.ts` |
+| Reminder and repo settings | `src/main/settings.ts` |
+| Daily commit streak | `src/renderer/streak.ts` |
 | Bridge between page and main process | `src/main/preload.ts` |
 | State machine, drawing, mouse, menu actions | `src/renderer/app.ts` |
 | What to do next, resting mood | `src/renderer/brain.ts` |
@@ -68,6 +88,6 @@ Choosing which pet to show from a menu is planned for v2 (`PET_ID` in `src/main/
 ## Roadmap
 
 - ~~**Week 2:** poses and emotions, stats, speech bubbles, saved state~~ ✅
-- **Week 3:** reactions to your day: late night, breaks, water, idle sleep, git commits
+- ~~**Week 3:** reactions to your day: late night, breaks, water, idle sleep, git commits~~ ✅
 - **Week 4:** tray settings, start with Windows, `.exe` installer
 - **v2:** pet picker, accessories, Pomodoro mode, visiting friends' pets

@@ -8,7 +8,15 @@ export interface SaveData {
   x: number | null;
   lastSeen: number;
   timesPetted: number;
+  /** Days in a row with at least one commit; streakDay is the last such day (YYYY-MM-DD, local). */
+  streakCount: number;
+  streakDay: string | null;
+  commitsToday: number;
+  commitsDay: string | null;
 }
+
+const count = (v: unknown) => (Number.isFinite(v) ? Math.max(0, Math.floor(v as number)) : 0);
+const day = (v: unknown) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
 
 const pct = (v: unknown) => (Number.isFinite(v) ? Math.max(0, Math.min(100, v as number)) : 50);
 
@@ -22,7 +30,11 @@ export function parseSave(raw: unknown): SaveData | null {
     stats: { energy: pct(o.stats.energy), happiness: pct(o.stats.happiness), hydration: pct(o.stats.hydration) },
     x: Number.isFinite(o.x) ? (o.x as number) : null,
     lastSeen: Number.isFinite(o.lastSeen) ? (o.lastSeen as number) : Date.now(),
-    timesPetted: Number.isFinite(o.timesPetted) ? Math.max(0, Math.floor(o.timesPetted as number)) : 0,
+    timesPetted: count(o.timesPetted),
+    streakCount: count(o.streakCount),
+    streakDay: day(o.streakDay),
+    commitsToday: count(o.commitsToday),
+    commitsDay: day(o.commitsDay),
   };
 }
 

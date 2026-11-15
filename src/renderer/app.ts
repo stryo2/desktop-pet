@@ -1,10 +1,11 @@
 // The pet's body: runs its behaviour, draws it, and handles the mouse and menu.
 // The window itself is the pet's position on screen: walking, leaping and falling move the window.
 
-import { chooseNext, pick, restingMood, type Choice } from './brain.js';
+import { chooseNext, isLateNight, pick, restingMood, type Choice } from './brain.js';
 import { Effects } from './effects.js';
 import { composeFrame, drawGrid, PROPS, type Emotion, type Grid } from './sprites.js';
 import { addStats, applyTimeAway, freshStats, tickStats, type Activity } from './stats.js';
+import { currentStreak, recordCommit, type StreakState } from './streak.js';
 
 const api = window.petApi;
 
@@ -18,13 +19,15 @@ const SAVE_EVERY = 15; // seconds
 
 type State =
   | 'idle' | 'walk' | 'sit' | 'groom' | 'stretch' | 'yawn' | 'sleep' | 'crouch' | 'leap'
-  | 'sad' | 'thirsty' | 'eat' | 'happy' | 'surprised' | 'dragged' | 'fall';
+  | 'sad' | 'thirsty' | 'eat' | 'happy' | 'surprised' | 'dragged' | 'fall'
+  | 'celebrate' | 'remindWater';
 
 /** Which of the pet's animations each state uses. */
 const ANIM: Record<State, string> = {
   idle: 'idle', walk: 'walk', sit: 'sit', groom: 'groom', stretch: 'stretch', yawn: 'sit',
   sleep: 'sleep', crouch: 'crouch', leap: 'leap', sad: 'sit', thirsty: 'sit', eat: 'eat',
   happy: 'idle', surprised: 'idle', dragged: 'dragged', fall: 'fall',
+  celebrate: 'idle', remindWater: 'sit',
 };
 
 const ACTIVITY: Partial<Record<State, Activity>> = { sleep: 'sleeping', walk: 'active', crouch: 'active', leap: 'active' };
@@ -44,6 +47,8 @@ let pet!: PetDef;
 let workArea!: Rect;
 let stats: PetStats = freshStats();
 let timesPetted = 0;
+const streak: StreakState = { streakCount: 0, streakDay: null, commitsToday: 0, commitsDay: null };
+let awayNap = false; // asleep because you're away from the PC: wakes when you're back
 const pos = { x: 0, y: 0 }; // window top-left, in screen coordinates
 let lastSent = { x: NaN, y: NaN };
 
@@ -97,7 +102,15 @@ function moveWindow(): void {
 
 function saveNow(): void {
   saveTimer = 0;
-  api.save({ version: 1, petId: pet.id, stats: { ...stats }, x: Math.round(pos.x), lastSeen: Date.now(), timesPetted });
+  api.save({
+    version: 1,
+    petId: pet.id,
+    stats: { ...stats },
+    x: Math.round(pos.x),
+    lastSeen: Date.now(),
+    timesPetted,
+    ...streak,
+  });
 }
 
 // ---------- states ----------
@@ -175,7 +188,9 @@ function headPoint(grid: Grid): { x: number; y: number } {
 function update(dt: number): void {
   stateTime += dt;
   animTime += dt;
+  const late = isLateNight();
   tickStats(stats, dt, ACTIVITY[state] ?? 'awake');
+  if (late && state !== 'sleep') addStats(stats, { energy: (-0.5 * dt) / 60 }); // tired faster at night
 
   // Standing on something? If the taskbar moved or the cat is in the air, fall or snap down.
   if (state !== 'dragged' && state !== 'fall' && state !== 'leap') {
@@ -192,7 +207,7 @@ function update(dt: number): void {
   switch (state) {
     case 'idle':
     case 'sit':
-      if (done) doChoice(chooseNext(stats));
+      if (done) doChoice(chooseNext(stats, late));
       break;
     case 'walk':
       pos.x += facing * WALK_SPEED * dt;
@@ -217,7 +232,7 @@ function update(dt: number): void {
         const head = headPoint(composeFrame(pet, 'lie', 'content'));
         effects.spawn('z', head.x, head.y - 4);
       }
-      if ((done && stats.energy > 85) || stateTime > 180) {
+      if (!awayNap && ((done && stats.energy > 85) || stateTime > 180)) {
         effects.say(pick(['good nap!', '*stretch*', 'mrrp']), 2);
         setState('stretch', 2);
       }
@@ -252,6 +267,8 @@ function update(dt: number): void {
       break;
     case 'happy':
     case 'surprised':
+    case 'celebrate':
+    case 'remindWater':
       if (done) setState('idle', rand(3, 8));
       break;
     case 'fall':
@@ -294,6 +311,7 @@ function currentEmotion(): Emotion {
     case 'yawn':
       return stateTime < 1.3 ? 'yawn' : 'content';
     case 'happy':
+    case 'celebrate':
       return stats.happiness > 80 ? 'love' : 'happy';
     case 'leap':
       return 'happy';
@@ -308,7 +326,7 @@ function currentEmotion(): Emotion {
     case 'crouch':
       return 'neutral'; // focused, no blinking
     default:
-      return blinkLeft > 0 ? 'blink' : restingMood(stats);
+      return blinkLeft > 0 ? 'blink' : restingMood(stats, isLateNight());
   }
 }
 
@@ -323,6 +341,8 @@ function motionOffsets(): { hop: number; wiggle: number } {
   switch (state) {
     case 'happy':
       return { hop: Math.abs(Math.sin(t * Math.PI * 2)) * 14 * (1 - t * 0.5), wiggle: 0 };
+    case 'celebrate':
+      return { hop: Math.abs(Math.sin(t * Math.PI * 3)) * 18, wiggle: 0 };
     case 'leap':
       return { hop: Math.sin(t * Math.PI) * 30, wiggle: 0 };
     case 'surprised':
@@ -344,8 +364,8 @@ function render(): void {
   const oy = Math.round((rect.y - hop) * dpr);
   drawGrid(ctx, grid, ox, oy, px, facing === -1);
 
-  if (state === 'eat') {
-    const bowl = food === 'water' ? PROPS.waterBowl : PROPS.foodBowl;
+  if (state === 'eat' || state === 'remindWater') {
+    const bowl = food === 'water' || state === 'remindWater' ? PROPS.waterBowl : PROPS.foodBowl;
     const bw = bowl[0].length;
     const col = facing === 1 ? 15 : pet.width - 15 - bw;
     drawGrid(ctx, bowl, ox + col * px, Math.round(rect.y * dpr) + (pet.height - bowl.length) * px, px);
@@ -381,8 +401,18 @@ function petTheCat(): void {
   timesPetted++;
 
   if (state === 'sleep') {
+    awayNap = false;
     effects.say(pick(['mrrp?!', 'huh?!', '…5 more minutes']), 1.8);
     setState('surprised', 0.9);
+    return;
+  }
+
+  if (state === 'remindWater') {
+    // You drank water: the cat drinks with you, and the reminder timer restarts.
+    api.waterAck();
+    food = 'water';
+    effects.say('cheers! 🥤', 2);
+    setState('eat', 3);
     return;
   }
 
@@ -482,6 +512,84 @@ function handleAction(action: MenuAction): void {
   }
 }
 
+// ---------- your day ----------
+
+function celebrate(text: string, pieces: number, seconds: number): void {
+  effects.say(text, 2.5);
+  if (state === 'dragged' || state === 'fall') return;
+  awayNap = false;
+  setState('celebrate', seconds);
+  const head = headPoint(composeFrame(pet, 'stand', 'happy'));
+  effects.confetti(head.x, head.y - 8, pieces);
+}
+
+function handleEvent(e: PetEvent): void {
+  const busy = state === 'dragged' || state === 'fall';
+  switch (e.type) {
+    case 'commit': {
+      if (e.kind === 'amend') {
+        effects.say('amended ✨', 1.8);
+        if (!busy) setState('happy', 1.1);
+        return;
+      }
+      const first = e.kind === 'commit' && recordCommit(streak);
+      const days = currentStreak(streak);
+      addStats(stats, { happiness: 5 });
+      let text: string;
+      if (first) text = days > 1 ? `🔥 ${days}-day streak!` : '🔥 first commit today!';
+      else if (e.kind === 'merge') text = 'merged! 🎉';
+      else text = pick(['nice commit!', 'ship it! 🚀', `${e.repo} +1!`, `commit #${streak.commitsToday} today!`]);
+      celebrate(text, first ? 28 : 18, 2);
+      saveNow();
+      return;
+    }
+    case 'push':
+      celebrate(pick(['pushed! 🚀', 'to the cloud! ☁️', 'shipped! 🎉']), 34, 2.4);
+      return;
+    case 'away':
+      if (busy) return;
+      awayNap = true;
+      effects.hush(); // nobody's there to read it
+      setState('sleep', Infinity);
+      return;
+    case 'back':
+      if (!awayNap) return;
+      awayNap = false;
+      effects.say(e.minutes >= 60 ? 'welcome back!' : pick(['oh hi!', "you're back!", 'mrrp!']), 2.5);
+      if (state === 'sleep') setState('stretch', 2);
+      return;
+    case 'breakDue':
+      effects.say(
+        pick([`${e.activeMinutes} min nonstop… stretch break? 🧘`, 'time to stretch! 🧘', 'rest your eyes a bit? 👀']),
+        7,
+      );
+      if (!busy && !awayNap) setState('stretch', 3);
+      return;
+    case 'breakTaken':
+      addStats(stats, { happiness: 5 });
+      if (!busy) setState('happy', 1.1);
+      effects.say(pick(['nice break! ✨', 'refreshed? 😺']), 2.5);
+      return;
+    case 'waterDue':
+      if (busy || awayNap) return;
+      setState('remindWater', 15);
+      effects.say('water break? 💧 click me when you drink!', 15);
+      return;
+    case 'lateNight':
+      if (!busy) setState('yawn', 1.8); // before the bubble, so the yawn's own "*yawn*" can't replace it
+      effects.say(pick(["it's late… sleep? 😴", 'bedtime, human 🌙', 'go to sleep! 💤']), 5);
+      return;
+    case 'reposFound':
+      effects.sayNext(
+        e.count > 0 ? `watching ${e.count} repo${e.count === 1 ? '' : 's'} for commits 👀` : 'no new git repos found 🤔',
+        4,
+      );
+      return;
+  }
+}
+
+api.onEvent((e) => handleEvent(e));
+
 // Developer hook for poking the cat from a test script (only with PET_DEBUG=1).
 if (new URLSearchParams(location.search).has('debug')) {
   Object.assign(window, {
@@ -492,10 +600,12 @@ if (new URLSearchParams(location.search).has('debug')) {
       get emotion() { return currentEmotion(); },
       get frame() { return currentFrameName(); },
       get pos() { return { x: Math.round(pos.x), y: Math.round(pos.y), ground: Math.round(groundY()) }; },
+      get streak() { return { ...streak, current: currentStreak(streak) }; },
       setState,
       doChoice,
       petTheCat,
       handleAction,
+      handleEvent,
       setStats: (s: Partial<PetStats>) => Object.assign(stats, s),
     },
   });
@@ -534,6 +644,10 @@ async function start(): Promise<void> {
   if (saved) {
     stats = { ...saved.stats };
     timesPetted = saved.timesPetted;
+    streak.streakCount = saved.streakCount ?? 0;
+    streak.streakDay = saved.streakDay ?? null;
+    streak.commitsToday = saved.commitsToday ?? 0;
+    streak.commitsDay = saved.commitsDay ?? null;
     if (saved.x !== null) pos.x = clampX(saved.x);
     const awayMinutes = (Date.now() - saved.lastSeen) / 60000;
     applyTimeAway(stats, awayMinutes);
@@ -542,6 +656,10 @@ async function start(): Promise<void> {
   } else {
     effects.say('hi! 👋', 3.5);
   }
+  if (streak.streakCount > 1 && currentStreak(streak) === 0) {
+    effects.sayNext(`your ${streak.streakCount}-day streak ended… start a new one today? 🔥`, 4);
+    streak.streakCount = 0;
+  }
   pos.y = groundY();
   saveNow();
 
@@ -549,6 +667,7 @@ async function start(): Promise<void> {
   api.onDisplayChanged(() => void refreshPlacement());
 
   setState('idle', 2);
+  api.ready(); // now the main process can send us events
   let last = performance.now();
   setInterval(() => {
     const now = performance.now();

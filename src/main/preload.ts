@@ -23,4 +23,9 @@ contextBridge.exposeInMainWorld('petApi', {
   onAction: (cb: (action: string) => void) => {
     ipcRenderer.on('pet:action', (_e, action: string) => cb(action));
   },
+  onEvent: (cb: (event: unknown) => void) => {
+    ipcRenderer.on('pet:event', (_e, event: unknown) => cb(event));
+  },
+  ready: () => ipcRenderer.send('pet:ready'),
+  waterAck: () => ipcRenderer.send('pet:waterAck'),
 });

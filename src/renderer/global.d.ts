@@ -35,7 +35,23 @@ interface SaveData {
   x: number | null;
   lastSeen: number; // ms timestamp
   timesPetted: number;
+  streakCount: number;
+  streakDay: string | null; // YYYY-MM-DD, local
+  commitsToday: number;
+  commitsDay: string | null;
 }
+
+/** Things happening in your day, sent by the main process. */
+type PetEvent =
+  | { type: 'away' }
+  | { type: 'back'; minutes: number }
+  | { type: 'breakDue'; activeMinutes: number }
+  | { type: 'breakTaken' }
+  | { type: 'waterDue' }
+  | { type: 'lateNight' }
+  | { type: 'commit'; repo: string; kind: 'commit' | 'amend' | 'merge' }
+  | { type: 'push'; repo: string }
+  | { type: 'reposFound'; count: number };
 
 /** Things you can ask the cat to do from the tray / right-click menu. */
 type MenuAction = 'water' | 'treat' | 'play' | 'nap';
@@ -55,6 +71,9 @@ interface PetApi {
   loadSave(): Promise<SaveData | null>;
   save(data: SaveData): void;
   onAction(cb: (action: MenuAction) => void): void;
+  onEvent(cb: (event: PetEvent) => void): void;
+  ready(): void;
+  waterAck(): void;
 }
 
 interface Window {

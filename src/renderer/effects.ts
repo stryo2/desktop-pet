@@ -2,7 +2,7 @@
 
 import { drawGrid, PROPS } from './sprites.js';
 
-type ParticleKind = 'heart' | 'z' | 'note';
+type ParticleKind = 'heart' | 'z' | 'note' | 'confetti';
 
 interface Particle {
   kind: ParticleKind;
@@ -12,7 +12,13 @@ interface Particle {
   vy: number;
   age: number;
   life: number;
+  color?: string;
 }
+
+const CONFETTI = ['#ff5c8a', '#ffd23f', '#3fd2a0', '#5b8def', '#b57bff', '#ff9f43'];
+const CONFETTI_GRAVITY = 260;
+const BUBBLE_FONT = 'bold 11px "Segoe UI", sans-serif';
+const LINE_HEIGHT = 14;
 
 interface Bubble {
   text: string;
@@ -27,8 +33,23 @@ export class Effects {
   private particles: Particle[] = [];
   private bubble: Bubble | null = null;
 
+  private queue: Bubble[] = [];
+
+  /** Says something right away, replacing the current bubble. */
   say(text: string, seconds = 2.5): void {
     this.bubble = { text, age: 0, life: seconds };
+  }
+
+  /** Stops talking (drops the current bubble and anything queued). */
+  hush(): void {
+    this.bubble = null;
+    this.queue = [];
+  }
+
+  /** Says something after the current bubble (and anything already queued) is done. */
+  sayNext(text: string, seconds = 2.5): void {
+    if (!this.bubble) this.say(text, seconds);
+    else this.queue.push({ text, age: 0, life: seconds });
   }
 
   get saying(): string | null {
@@ -41,8 +62,25 @@ export class Effects {
     this.particles.push({ kind, x, y, vx: drift, vy: -22, age: 0, life });
   }
 
+  /** A burst of confetti from (x, y). */
+  confetti(x: number, y: number, pieces = 20): void {
+    for (let i = 0; i < pieces; i++) {
+      this.particles.push({
+        kind: 'confetti',
+        x,
+        y,
+        vx: (Math.random() - 0.5) * 140,
+        vy: -60 - Math.random() * 90,
+        age: 0,
+        life: 1.4 + Math.random() * 0.6,
+        color: CONFETTI[i % CONFETTI.length],
+      });
+    }
+  }
+
   update(dt: number): void {
     for (const p of this.particles) {
+      if (p.kind === 'confetti') p.vy += CONFETTI_GRAVITY * dt;
       p.age += dt;
       p.x += p.vx * dt;
       p.y += p.vy * dt;
@@ -50,7 +88,7 @@ export class Effects {
     this.particles = this.particles.filter((p) => p.age < p.life);
     if (this.bubble) {
       this.bubble.age += dt;
-      if (this.bubble.age > this.bubble.life) this.bubble = null;
+      if (this.bubble.age > this.bubble.life) this.bubble = this.queue.shift() ?? null;
     }
   }
 
@@ -62,6 +100,12 @@ export class Effects {
       if (p.kind === 'heart') {
         const size = Math.max(1, Math.round(3 * dpr));
         drawGrid(ctx, PROPS.heart, Math.round(p.x * dpr - 3.5 * size), Math.round(p.y * dpr), size);
+      } else if (p.kind === 'confetti') {
+        const size = Math.max(2, Math.round(3 * dpr));
+        ctx.fillStyle = p.color!;
+        // Flutter: alternate between a square and a thin sliver.
+        const thin = Math.floor(p.age * 12 + p.vx) % 2 === 0;
+        ctx.fillRect(Math.round(p.x * dpr), Math.round(p.y * dpr), size, thin ? Math.max(1, size / 3) : size);
       } else {
         ctx.save();
         ctx.scale(dpr, dpr);
@@ -85,10 +129,11 @@ export class Effects {
     ctx.save();
     ctx.scale(dpr, dpr);
     ctx.globalAlpha = Math.max(0, fade);
-    ctx.font = 'bold 11px "Segoe UI", sans-serif';
-    const textW = ctx.measureText(b.text).width;
+    ctx.font = BUBBLE_FONT;
+    const lines = wrap(ctx, b.text, windowW - 20);
+    const textW = Math.max(...lines.map((l) => ctx.measureText(l).width));
     const w = Math.ceil(textW + 14);
-    const h = 20;
+    const h = 6 + lines.length * LINE_HEIGHT;
     const x = Math.min(Math.max(2, headX - w / 2), windowW - w - 2);
     const y = Math.max(2, headY - h - 8 - (1 - appear) * 4);
 
@@ -116,7 +161,24 @@ export class Effects {
 
     ctx.fillStyle = INK;
     ctx.textBaseline = 'middle';
-    ctx.fillText(b.text, x + 7, y + h / 2 + 0.5);
+    lines.forEach((line, i) => ctx.fillText(line, x + 7, y + 3 + LINE_HEIGHT * (i + 0.5) + 0.5));
     ctx.restore();
   }
+}
+
+/** Splits text into lines that fit maxWidth (by words). */
+function wrap(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const lines: string[] = [];
+  let line = '';
+  for (const word of text.split(' ')) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && ctx.measureText(next).width > maxWidth) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = next;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
 }
