@@ -8,32 +8,36 @@
     "K": "#2b2233",
     "G": "#a3a3b3",
     "D": "#4f4c62",
+    "M": "#67637d",
     "W": "#f6f1e7",
     "P": "#f78fa7",
     "T": "#6cc4f5"
   },
   "faces": {
-    "neutral": [".W..W.", ".W..W."],
-    "blink": ["......", "GG.GG."],
-    "happy": [".W..W.", "W.WW.W"],
-    "content": ["......", "GG.GG."],
-    "sleepy": ["......", ".W..W."],
-    "sad": [".W..W.", ".W..W.", ".T...."],
-    "surprised": ["WW.WW.", "WW.WW."],
-    "love": [".W..W.", "W.WW.W", "P....P"],
-    "yawn": ["......", "GG.GG.", "......", "..KK.."]
+    "neutral": ["WK.WK.", "KK.KK."],
+    "blink": ["......", "KK.KK."],
+    "happy": ["WK.WK.", "KW.KW."],
+    "content": ["......", "KK.KK."],
+    "sleepy": ["......", "WK.WK."],
+    "sad": ["WK.WK.", "KK.KK.", "T....."],
+    "surprised": ["WW.WW.", "WK.WK."],
+    "love": ["WK.WK.", "KK.KK.", "P...P."],
+    "yawn": ["......", "KK.KK.", "......", ".KPK.."]
   },
   "frames": {
     "stand": {
-      "face": [13, 4],
+      "face": [
+        13,
+        4
+      ],
       "rows": [
-        "....................",
-        ".KKK.......KKK...KKK",
-        "KGGGK......KPKKKKKPK",
-        "KDDDK......KGGGGGGGK",
-        "KGGGK......KDDDGDDDK",
-        "KDDDK......KDDDGDDDK",
-        "KGGGK......KGDDKDDGK",
+        "...........KKK...KKK",
+        ".KKK.......KPKKKKKPK",
+        "KGGGK......KGWWGWWGK",
+        "KDDDK......KMMMGMMMK",
+        "KGGGK......KMMMGMMMK",
+        "KDDDK......KMMMGMMMK",
+        "KGGGK......KGMMKMMGK",
         "KDDDKKKKKKKKGWWWWWGK",
         ".KGGGGGGGGGGGKWWWWK.",
         "..KGGGGGGGGGGGKKKK..",
@@ -45,15 +49,18 @@
       ]
     },
     "walkSpread": {
-      "face": [13, 4],
+      "face": [
+        13,
+        4
+      ],
       "rows": [
-        "....................",
-        ".KKK.......KKK...KKK",
-        "KGGGK......KPKKKKKPK",
-        "KDDDK......KGGGGGGGK",
-        "KGGGK......KDDDGDDDK",
-        "KDDDK......KDDDGDDDK",
-        "KGGGK......KGDDKDDGK",
+        "...........KKK...KKK",
+        ".KKK.......KPKKKKKPK",
+        "KGGGK......KGWWGWWGK",
+        "KDDDK......KMMMGMMMK",
+        "KGGGK......KMMMGMMMK",
+        "KDDDK......KMMMGMMMK",
+        "KGGGK......KGMMKMMGK",
         "KDDDKKKKKKKKGWWWWWGK",
         ".KGGGGGGGGGGGKWWWWK.",
         "..KGGGGGGGGGGGKKKK..",
@@ -65,15 +72,18 @@
       ]
     },
     "walkTogether": {
-      "face": [13, 4],
+      "face": [
+        13,
+        4
+      ],
       "rows": [
-        "....................",
-        ".KKK.......KKK...KKK",
-        "KGGGK......KPKKKKKPK",
-        "KDDDK......KGGGGGGGK",
-        "KGGGK......KDDDGDDDK",
-        "KDDDK......KDDDGDDDK",
-        "KGGGK......KGDDKDDGK",
+        "...........KKK...KKK",
+        ".KKK.......KPKKKKKPK",
+        "KGGGK......KGWWGWWGK",
+        "KDDDK......KMMMGMMMK",
+        "KGGGK......KMMMGMMMK",
+        "KDDDK......KMMMGMMMK",
+        "KGGGK......KGMMKMMGK",
         "KDDDKKKKKKKKGWWWWWGK",
         ".KGGGGGGGGGGGKWWWWK.",
         "..KGGGGGGGGGGGKKKK..",
@@ -85,14 +95,17 @@
       ]
     },
     "sit": {
-      "face": [11, 4],
+      "face": [
+        11,
+        4
+      ],
       "rows": [
-        "....................",
         ".........KKK...KKK..",
         ".........KPKKKKKPK..",
-        ".........KGGGGGGGK..",
-        ".........KDDDGDDDK..",
-        ".........KDDDGDDDK..",
+        ".........KMMMGMMMK..",
+        ".........KGWWGWWGK..",
+        ".........KMMMGMMMK..",
+        ".........KMMMGMMMK..",
         ".........KGDDKDDGK..",
         ".......KKGGWWWWWGK..",
         ".KK..KKGGGGKWWWWK...",
@@ -105,14 +118,17 @@
       ]
     },
     "groom": {
-      "face": [11, 4],
+      "face": [
+        11,
+        4
+      ],
       "rows": [
-        "....................",
         ".........KKK...KKK..",
         ".........KPKKKKKPK..",
-        ".........KGGGGGGGK..",
-        ".........KDDDGDDDK..",
-        ".........KDDDGDDDK..",
+        ".........KMMMGMMMK..",
+        ".........KGWWGWWGK..",
+        ".........KMMMGMMMK..",
+        ".........KMMMGMMMK..",
         ".........KGDDKDDGK..",
         ".......KKGGWWWWWGK..",
         ".KK..KKGGGGKWWWWKDK.",
@@ -125,14 +141,17 @@
       ]
     },
     "scrub": {
-      "face": [11, 4],
+      "face": [
+        11,
+        4
+      ],
       "rows": [
-        "....................",
         ".........KKK...KKK..",
         ".........KPKKKKKPK..",
-        ".........KGGGGGGGK..",
-        ".........KDDDGDDDK..",
-        ".........KDDDGDDDK..",
+        ".........KMMMGMMMK..",
+        ".........KGWWGWWGK..",
+        ".........KMMMGMMMK..",
+        ".........KMMMGMMMK..",
         ".........KGDDKDDGK..",
         ".......KKGGWWWWWGK..",
         ".KK..KKGGGGKWWWWK...",
@@ -145,9 +164,11 @@
       ]
     },
     "lie": {
-      "face": [13, 9],
+      "face": [
+        13,
+        9
+      ],
       "rows": [
-        "....................",
         "....................",
         "....................",
         "....................",
@@ -155,9 +176,10 @@
         "....................",
         "...........KKK...KKK",
         "...........KPKKKKKPK",
-        "...........KGGGGGGGK",
-        "..KKKKKKKKKKDDDGDDDK",
-        ".KDGDGGGGGGGDDDGDDDK",
+        "...........KMMMGMMMK",
+        "...........KGWWGWWGK",
+        "..KKKKKKKKKKMMMGMMMK",
+        ".KDGDGGGGGGGMMMGMMMK",
         ".KDGDGGGGGGGGDDKDDGK",
         ".KDGDGGGGGGGGWWWWWGK",
         ".KGWWWWWWWWWGKWWWWK.",
@@ -165,27 +187,33 @@
       ]
     },
     "stretch": {
-      "face": [13, 9],
+      "face": [
+        13,
+        9
+      ],
       "rows": [
         "....................",
         ".KK.................",
         "KDDK................",
         "KGGK................",
         "KDDKKKK.............",
-        "KGGGGGGK............",
-        ".KGGGGGGK..KKK...KKK",
-        "..KGGGGGGK.KPKKKKKPK",
-        "..KGGGGGGGKKGGGGGGGK",
-        "..KGGGGGGGGGDDDGDDDK",
-        "..KGWWWGGGGGDDDGDDDK",
-        "..KDDKKKKKKKGDDKDDGK",
+        "KGGGGGGK...KKK...KKK",
+        ".KGGGGGGK..KPKKKKKPK",
+        "..KGGGGGGK.KGWWGWWGK",
+        "..KGGGGGGGKKMMMGMMMK",
+        "..KGGGGGGGGGMMMGMMMK",
+        "..KGWWWGGGGGMMMGMMMK",
+        "..KDDKKKKKKKGMMKMMGK",
         "..KDDK.....KGWWWWWGK",
         "..KDDK......KWWWWK..",
         "..KKKK....KDDDDDDDDK"
       ]
     },
     "headDown": {
-      "face": [13, 10],
+      "face": [
+        13,
+        10
+      ],
       "rows": [
         "....................",
         "....................",
@@ -193,27 +221,33 @@
         ".KKK................",
         "KGGGK...............",
         "KDDDK...............",
-        "KGGGK...............",
-        "KDDDKKKKKKKKKK...KKK",
-        ".KGGGGGGGGGKPKKKKKPK",
-        "..KGGGGGGGGKGGGGGGGK",
-        "..KGGGGGGGGKDDDGDDDK",
-        "..KGWWWWWWWKDDDGDDDK",
-        "...KDDKKKKKKGDDKDDGK",
+        "KGGGK......KKK...KKK",
+        "KDDDKKKKKKKKPKKKKKPK",
+        ".KGGGGGGGGGKGWWGWWGK",
+        "..KGGGGGGGGKMMMGMMMK",
+        "..KGGGGGGGGKMMMGMMMK",
+        "..KGWWWWWWWKMMMGMMMK",
+        "...KDDKKKKKKGMMKMMGK",
         "...KDDK....KDDKWWWK.",
         "...KKKK....KKKK....."
       ]
     },
     "upright": {
-      "face": [10, 3],
-      "hold": [16, 7],
+      "face": [
+        10,
+        3
+      ],
+      "hold": [
+        16,
+        7
+      ],
       "rows": [
         "........KKK...KKK...",
         "........KPKKKKKPK...",
-        "........KGGGGGGGK...",
-        "........KDDDGDDDK...",
-        "........KDDDGDDDK...",
-        "........KGDDKDDGK...",
+        "........KMMMGMMMK...",
+        "........KMMMGMMMK...",
+        "........KMMMGMMMK...",
+        "........KGMMKMMGK...",
         "........KGWWWWWGK...",
         "........KGGWWWWK....",
         "........KGGWWWGK....",
@@ -226,16 +260,19 @@
       ]
     },
     "sneakA": {
-      "face": [13, 6],
+      "face": [
+        13,
+        6
+      ],
       "rows": [
-        "....................",
         "....................",
         "....................",
         "...........KKK...KKK",
         "...........KPKKKKKPK",
-        "...........KGGGGGGGK",
-        "...........KDDDGDDDK",
-        "...........KDDDGDDDK",
+        "...........KMMMGMMMK",
+        "...........KGWWGWWGK",
+        "...........KMMMGMMMK",
+        "...........KMMMGMMMK",
         "...KKKKKKKKKGDDKDDGK",
         "KKKGGGGGGGGGGWWWWWGK",
         "KDGDGGGGGGGGGKWWWWK.",
@@ -246,16 +283,19 @@
       ]
     },
     "sneakB": {
-      "face": [13, 6],
+      "face": [
+        13,
+        6
+      ],
       "rows": [
-        "....................",
         "....................",
         "....................",
         "...........KKK...KKK",
         "...........KPKKKKKPK",
-        "...........KGGGGGGGK",
-        "...........KDDDGDDDK",
-        "...........KDDDGDDDK",
+        "...........KMMMGMMMK",
+        "...........KGWWGWWGK",
+        "...........KMMMGMMMK",
+        "...........KMMMGMMMK",
         "...KKKKKKKKKGDDKDDGK",
         "KKKGGGGGGGGGGWWWWWGK",
         "KDGDGGGGGGGGGKWWWWK.",
@@ -267,23 +307,82 @@
     }
   },
   "animations": {
-    "idle": { "frames": ["stand"], "fps": 1 },
-    "walk": { "frames": ["stand", "walkSpread", "stand", "walkTogether"], "fps": 9 },
-    "sit": { "frames": ["sit"], "fps": 1 },
-    "groom": { "frames": ["groom", "scrub"], "fps": 6 },
-    "sleep": { "frames": ["lie"], "fps": 1 },
-    "stretch": { "frames": ["stretch"], "fps": 1 },
-    "crouch": { "frames": ["lie"], "fps": 1 },
-    "leap": { "frames": ["walkSpread"], "fps": 1 },
-    "eat": { "frames": ["headDown"], "fps": 1 },
-    "dragged": { "frames": ["walkSpread", "walkTogether"], "fps": 8 },
-    "fall": { "frames": ["walkSpread"], "fps": 1 },
-    "rummage": { "frames": ["headDown"], "fps": 1 },
-    "wash": { "frames": ["groom", "scrub"], "fps": 8 },
-    "upright": { "frames": ["upright"], "fps": 1 },
-    "sneak": { "frames": ["sneakA", "sneakB"], "fps": 4 }
+    "idle": {
+      "frames": ["stand"],
+      "fps": 1
+    },
+    "walk": {
+      "frames": [
+        "stand",
+        "walkSpread",
+        "stand",
+        "walkTogether"
+      ],
+      "fps": 9
+    },
+    "sit": {
+      "frames": ["sit"],
+      "fps": 1
+    },
+    "groom": {
+      "frames": ["groom", "scrub"],
+      "fps": 6
+    },
+    "sleep": {
+      "frames": ["lie"],
+      "fps": 1
+    },
+    "stretch": {
+      "frames": ["stretch"],
+      "fps": 1
+    },
+    "crouch": {
+      "frames": ["lie"],
+      "fps": 1
+    },
+    "leap": {
+      "frames": [
+        "walkSpread"
+      ],
+      "fps": 1
+    },
+    "eat": {
+      "frames": ["headDown"],
+      "fps": 1
+    },
+    "dragged": {
+      "frames": [
+        "walkSpread",
+        "walkTogether"
+      ],
+      "fps": 8
+    },
+    "fall": {
+      "frames": [
+        "walkSpread"
+      ],
+      "fps": 1
+    },
+    "rummage": {
+      "frames": ["headDown"],
+      "fps": 1
+    },
+    "wash": {
+      "frames": ["groom", "scrub"],
+      "fps": 8
+    },
+    "upright": {
+      "frames": ["upright"],
+      "fps": 1
+    },
+    "sneak": {
+      "frames": ["sneakA", "sneakB"],
+      "fps": 4
+    }
   },
-  "poses": { "surprised": "upright" },
+  "poses": {
+    "surprised": "upright"
+  },
   "personality": {
     "walkSpeed": 58,
     "sneakSpeed": 22,
@@ -291,47 +390,185 @@
     "washesFood": true,
     "nightEnergyDrain": 0,
     "sleepyAtNight": false,
-    "weights": { "idle": 8, "walk": 34, "sit": 8, "groom": 14, "stretch": 4, "yawn": 3, "sleep": 3, "play": 16, "look": 8, "sneak": 10 },
-    "night": { "add": { "play": 12, "walk": 8, "sneak": 8 }, "scale": { "sleep": 0.3, "yawn": 0.3 } },
-    "midday": { "add": { "yawn": 8, "sleep": 10 }, "scale": { "play": 0.6 } },
+    "weights": {
+      "idle": 8,
+      "walk": 34,
+      "sit": 8,
+      "groom": 14,
+      "stretch": 4,
+      "yawn": 3,
+      "sleep": 3,
+      "play": 16,
+      "look": 8,
+      "sneak": 10
+    },
+    "night": {
+      "add": {
+        "play": 12,
+        "walk": 8,
+        "sneak": 8
+      },
+      "scale": {
+        "sleep": 0.3,
+        "yawn": 0.3
+      }
+    },
+    "midday": {
+      "add": {
+        "yawn": 8,
+        "sleep": 10
+      },
+      "scale": {
+        "play": 0.6
+      }
+    },
     "rates": {
-      "awake": { "energy": -0.6, "happiness": -0.3, "hydration": -0.4 },
-      "active": { "energy": -1.8, "happiness": -0.2, "hydration": -0.7 },
-      "sleeping": { "energy": 20, "happiness": -0.1, "hydration": -0.15 }
+      "awake": {
+        "energy": -0.6,
+        "happiness": -0.3,
+        "hydration": -0.4
+      },
+      "active": {
+        "energy": -1.8,
+        "happiness": -0.2,
+        "hydration": -0.7
+      },
+      "sleeping": {
+        "energy": 20,
+        "happiness": -0.1,
+        "hydration": -0.15
+      }
     },
     "lines": {
-      "hello": ["psst. I live here now 🦝"],
-      "missedYou": ["finally! I guarded the taskbar"],
-      "sleepy": ["day shift is exhausting…"],
+      "hello": [
+        "psst. I live here now 🦝"
+      ],
+      "missedYou": [
+        "finally! I guarded the taskbar"
+      ],
+      "sleepy": [
+        "day shift is exhausting…"
+      ],
       "yawn": ["*yaaawn*"],
-      "groom": ["*scrub scrub*", "gotta wash these paws"],
-      "sad": ["nobody to cause trouble with…", "bored. so bored.", "…"],
-      "thirsty": ["got any water? 💧", "parched over here…"],
-      "dragged": ["unhand me!", "I wasn't stealing!", "hey hey hey!", "this is a kidnapping!"],
-      "wokeUp": ["what'd I miss?", "*stretch*", "back on patrol"],
+      "groom": [
+        "*scrub scrub*",
+        "gotta wash these paws"
+      ],
+      "sad": [
+        "nobody to cause trouble with…",
+        "bored. so bored.",
+        "…"
+      ],
+      "thirsty": [
+        "got any water? 💧",
+        "parched over here…"
+      ],
+      "dragged": [
+        "unhand me!",
+        "I wasn't stealing!",
+        "hey hey hey!",
+        "this is a kidnapping!"
+      ],
+      "wokeUp": [
+        "what'd I miss?",
+        "*stretch*",
+        "back on patrol"
+      ],
       "played": ["gotcha!", "too slow!", "heh heh"],
-      "drank": ["ahh~", "washed AND hydrated", "thanks, boss"],
-      "ate": ["delicious loot!", "nom nom nom", "got any more?"],
-      "poked": ["wasn't sleeping!", "huh?! who?!", "…just resting my eyes"],
-      "cheers": ["cheers, partner! 🥤"],
-      "pettedLots": ["ok ok, I'm fearsome!", "…don't stop though", "*happy chitter*"],
-      "petted": ["*chitter*", "hmph. acceptable."],
-      "tooTired": ["too tired for crimes…"],
-      "napTime": ["fine, a quick one…"],
-      "amended": ["evidence tidied ✨"],
-      "commit": ["ooh, shiny commit!", "stashed it! 💎", "{repo}: loot secured!", "haul #{n} today!"],
-      "merged": ["the heist came together! 🎉"],
-      "push": ["smuggled to the cloud! ☁️", "clean getaway! 🚀", "shipped the goods! 🎉"],
-      "back": ["oh! you're back!", "I touched nothing. promise.", "*sniff sniff* it's you!"],
-      "backLong": ["there you are! I kept watch"],
-      "breakDue": ["{minutes} min nonstop… stretch those paws? 🧘", "even bandits take breaks 🧘", "rest your eyes, boss 👀"],
-      "breakTaken": ["smart move ✨", "fresh paws! 🦝"],
-      "waterDue": ["water time, boss 💧 click me when you drink!"],
-      "lateNight": ["I'm nocturnal. you're not. bed! 🌙", "night shift's mine, go sleep 😴", "shoo, to bed with you! 💤"],
-      "treasure": ["ooh, shiny!", "mine now!", "treasure!!", "finders keepers"],
-      "washFood": ["*scrub scrub*", "gotta wash it first"],
-      "look": ["*sniff sniff*", "what's that?", "I smell snacks…"],
-      "sneak": ["*tiptoe*", "you saw nothing…"]
+      "drank": [
+        "ahh~",
+        "washed AND hydrated",
+        "thanks, boss"
+      ],
+      "ate": [
+        "delicious loot!",
+        "nom nom nom",
+        "got any more?"
+      ],
+      "poked": [
+        "wasn't sleeping!",
+        "huh?! who?!",
+        "…just resting my eyes"
+      ],
+      "cheers": [
+        "cheers, partner! 🥤"
+      ],
+      "pettedLots": [
+        "ok ok, I'm fearsome!",
+        "…don't stop though",
+        "*happy chitter*"
+      ],
+      "petted": [
+        "*chitter*",
+        "hmph. acceptable."
+      ],
+      "tooTired": [
+        "too tired for crimes…"
+      ],
+      "napTime": [
+        "fine, a quick one…"
+      ],
+      "amended": [
+        "evidence tidied ✨"
+      ],
+      "commit": [
+        "ooh, shiny commit!",
+        "stashed it! 💎",
+        "{repo}: loot secured!",
+        "haul #{n} today!"
+      ],
+      "merged": [
+        "the heist came together! 🎉"
+      ],
+      "push": [
+        "smuggled to the cloud! ☁️",
+        "clean getaway! 🚀",
+        "shipped the goods! 🎉"
+      ],
+      "back": [
+        "oh! you're back!",
+        "I touched nothing. promise.",
+        "*sniff sniff* it's you!"
+      ],
+      "backLong": [
+        "there you are! I kept watch"
+      ],
+      "breakDue": [
+        "{minutes} min nonstop… stretch those paws? 🧘",
+        "even bandits take breaks 🧘",
+        "rest your eyes, boss 👀"
+      ],
+      "breakTaken": [
+        "smart move ✨",
+        "fresh paws! 🦝"
+      ],
+      "waterDue": [
+        "water time, boss 💧 click me when you drink!"
+      ],
+      "lateNight": [
+        "I'm nocturnal. you're not. bed! 🌙",
+        "night shift's mine, go sleep 😴",
+        "shoo, to bed with you! 💤"
+      ],
+      "treasure": [
+        "ooh, shiny!",
+        "mine now!",
+        "treasure!!",
+        "finders keepers"
+      ],
+      "washFood": [
+        "*scrub scrub*",
+        "gotta wash it first"
+      ],
+      "look": [
+        "*sniff sniff*",
+        "what's that?",
+        "I smell snacks…"
+      ],
+      "sneak": [
+        "*tiptoe*",
+        "you saw nothing…"
+      ]
     }
   }
 }
