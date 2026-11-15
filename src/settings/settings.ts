@@ -81,7 +81,9 @@ function saved(): void {
 const basename = (p: string) => p.split(/[\\/]/).filter(Boolean).pop() ?? p;
 
 function render(v: SettingsView): void {
-  petList.replaceChildren(...(v.pets.length > 1 ? v.pets.map((p) => petButton(p, p.id === v.petId)) : []));
+  // An older running app sends no pets; show no picker rather than breaking the page.
+  const pets = v.pets ?? [];
+  petList.replaceChildren(...(pets.length > 1 ? pets.map((p) => petButton(p, p.id === v.petId)) : []));
 
   catScale.min = String(v.limits.catScale[0]);
   catScale.max = String(v.limits.catScale[1]);
