@@ -74,6 +74,8 @@ interface PetApi {
   onEvent(cb: (event: PetEvent) => void): void;
   ready(): void;
   waterAck(): void;
+  getScale(): Promise<number>;
+  onScale(cb: (msg: { scale: number; bounds: Rect }) => void): void;
 }
 
 interface Window {

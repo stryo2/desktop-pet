@@ -3,13 +3,14 @@ import * as path from 'node:path';
 import { ActivityMonitor } from './activity.js';
 import type { PetEvent } from './events.js';
 import { defaultRepoRoots, findRepos, GitWatcher } from './gitWatcher.js';
-import { listPets, loadPet } from './petLoader.js';
+import { listPets, loadPet, type PetDef } from './petLoader.js';
 import { parseSave, readSave, writeSave, type SaveData } from './save.js';
-import { readSettings, writeSettings, type Settings } from './settings.js';
+import { LIMITS, mergeSettings, readSettings, writeSettings, type Settings } from './settings.js';
 
-// The window is a little bigger than the cat, leaving room above it for hops, hearts and speech bubbles.
-const WIN_W = 160;
-const WIN_H = 150;
+// Keep the same data folder whether running from source or installed (the installed app's
+// name is "Desktop Pet", which would otherwise give it a different folder and lose your cat's save).
+// Test scripts (PET_DEBUG) choose their own folder.
+if (!process.env.PET_DEBUG) app.setPath('userData', path.join(app.getPath('appData'), 'desktop-pet'));
 
 // v2: read this from settings and let the user pick from listPets().
 const PET_ID = 'cat';
@@ -18,7 +19,16 @@ const rootDir = path.join(__dirname, '..', '..');
 const petsDir = path.join(rootDir, 'pets');
 
 let win: BrowserWindow | null = null;
+let settingsWin: BrowserWindow | null = null;
 let tray: Tray | null = null;
+let petDef: PetDef;
+
+// The window is a little bigger than the cat, leaving room above it for hops, hearts and speech bubbles.
+const MARGIN_W = 60;
+const MARGIN_H = 75;
+function winSize(scale = settings.catScale): { w: number; h: number } {
+  return { w: petDef.width * scale + MARGIN_W, h: petDef.height * scale + MARGIN_H };
+}
 
 // Mouse handling. The window ignores the mouse (clicks go to the app behind it) except
 // while the cursor is over the cat. Windows doesn't reliably forward mouse moves to an
@@ -59,12 +69,45 @@ function isPoint(p: unknown): p is { x: number; y: number } {
 /** Bottom-right of the primary screen, sitting on the taskbar. */
 function homePosition(): { x: number; y: number } {
   const wa = screen.getPrimaryDisplay().workArea;
-  return { x: Math.round(wa.x + wa.width * 0.75), y: wa.y + wa.height - WIN_H };
+  return { x: Math.round(wa.x + wa.width * 0.75), y: wa.y + wa.height - winSize().h };
 }
 
 function moveTo(x: number, y: number): void {
   // setBounds (not setPosition) keeps the size fixed when crossing monitors with different scaling.
-  win?.setBounds({ x: Math.round(x), y: Math.round(y), width: WIN_W, height: WIN_H });
+  const { w, h } = winSize();
+  win?.setBounds({ x: Math.round(x), y: Math.round(y), width: w, height: h });
+}
+
+/** Resizes the cat, keeping its feet and center where they are. */
+function applyScale(oldScale: number): void {
+  if (!win || oldScale === settings.catScale) return;
+  const b = win.getBounds();
+  const old = winSize(oldScale);
+  const next = winSize();
+  const x = b.x + old.w / 2 - next.w / 2;
+  const y = b.y + old.h - next.h;
+  moveTo(x, y);
+  win.webContents.send('pet:scale', { scale: settings.catScale, bounds: win.getBounds() });
+}
+
+// ---------- start with Windows ----------
+
+// One fixed entry name, so the installed app replaces an entry made while running from source.
+const LOGIN_NAME = process.env.PET_LOGIN_NAME || 'DesktopPet';
+function loginItemOptions() {
+  return app.isPackaged
+    ? { name: LOGIN_NAME }
+    : { name: LOGIN_NAME, path: process.execPath, args: [app.getAppPath()] };
+}
+function getStartWithWindows(): boolean {
+  // On Windows, openAtLogin stays false for named entries; launchItems has the real answer
+  // (and "enabled" is false if you turned it off in Task Manager's Startup apps).
+  const s = app.getLoginItemSettings(loginItemOptions());
+  const item = s.launchItems?.find((i) => i.name === LOGIN_NAME);
+  return item ? item.enabled : s.openAtLogin;
+}
+function setStartWithWindows(on: boolean): void {
+  app.setLoginItemSettings({ openAtLogin: on, ...loginItemOptions() });
 }
 
 const savePath = () => path.join(app.getPath('userData'), 'save.json');
@@ -97,6 +140,7 @@ function saveSettings(): void {
     console.error('Could not save settings:', err);
   }
   refreshTrayMenu();
+  pushSettingsView();
 }
 
 function setRepos(repos: string[]): void {
@@ -118,7 +162,6 @@ async function addRepoFolder(): Promise<void> {
 }
 
 function startDayWatchers(): void {
-  settings = readSettings(settingsPath());
   activity = new ActivityMonitor(() => settings, sendEvent);
   activity.idleSeconds = () => powerMonitor.getSystemIdleTime();
   setInterval(() => activity.tick(), ACTIVITY_TICK_MS);
@@ -164,6 +207,89 @@ function toggle(key: 'breakReminders' | 'waterReminders' | 'lateNightNudges'): v
   settings[key] = !settings[key];
   activity.resetTimers();
   saveSettings();
+}
+
+// ---------- settings window ----------
+
+function settingsView() {
+  return {
+    ...settings,
+    repos: git?.watching ?? [],
+    startWithWindows: getStartWithWindows(),
+    limits: LIMITS,
+  };
+}
+
+/** Keeps an open settings window in sync with changes made elsewhere (e.g. the tray menu). */
+function pushSettingsView(): void {
+  settingsWin?.webContents.send('settings:changed', settingsView());
+}
+
+function openSettings(): void {
+  if (settingsWin) {
+    settingsWin.show();
+    settingsWin.focus();
+    return;
+  }
+  settingsWin = new BrowserWindow({
+    width: 440,
+    // Tall enough for everything; smaller screens get a scrollbar instead.
+    height: Math.min(770, screen.getPrimaryDisplay().workArea.height - 60),
+    useContentSize: true, // size the page area, not the outer frame
+    title: 'Desktop Pet settings',
+    resizable: false,
+    maximizable: false,
+    minimizable: false,
+    autoHideMenuBar: true,
+    show: false,
+    backgroundColor: '#fffaf2',
+    webPreferences: {
+      preload: path.join(__dirname, 'settingsPreload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+  settingsWin.setMenu(null);
+  settingsWin.loadFile(path.join(rootDir, 'static', 'settings.html'));
+  settingsWin.once('ready-to-show', () => settingsWin?.show());
+  settingsWin.on('closed', () => (settingsWin = null));
+}
+
+function registerSettingsIpc(): void {
+  ipcMain.handle('settings:get', () => settingsView());
+
+  ipcMain.handle('settings:update', (_e, patch: unknown) => {
+    if (!patch || typeof patch !== 'object') return settingsView();
+    const p = patch as Record<string, unknown>;
+    if (typeof p.startWithWindows === 'boolean') setStartWithWindows(p.startWithWindows);
+    const oldScale = settings.catScale;
+    const before = JSON.stringify([settings.breakMinutes, settings.waterMinutes, settings.breakReminders, settings.waterReminders]);
+    settings = mergeSettings(settings, p);
+    if (JSON.stringify([settings.breakMinutes, settings.waterMinutes, settings.breakReminders, settings.waterReminders]) !== before) {
+      activity.resetTimers();
+    }
+    saveSettings();
+    applyScale(oldScale);
+    return settingsView();
+  });
+
+  ipcMain.handle('settings:addRepos', async () => {
+    await addRepoFolder();
+    return settingsView();
+  });
+
+  ipcMain.handle('settings:rescanRepos', () => {
+    const before = git.watching.length;
+    setRepos([...(settings.repos ?? []), ...findRepos(defaultRepoRoots())]);
+    sendEvent({ type: 'reposFound', count: git.watching.length - before });
+    return settingsView();
+  });
+
+  ipcMain.handle('settings:removeRepo', (_e, repo: unknown) => {
+    if (typeof repo === 'string') setRepos((settings.repos ?? []).filter((r) => r !== repo));
+    return settingsView();
+  });
 }
 
 function buildMenu(): Menu {
@@ -220,6 +346,7 @@ function buildMenu(): Menu {
         },
       ],
     },
+    { label: 'Settings…', click: () => openSettings() },
     { type: 'separator' },
     {
       label: 'Bring cat back',
@@ -240,9 +367,10 @@ function refreshTrayMenu(): void {
 
 function createWindow(): void {
   const home = homePosition();
+  const { w, h } = winSize();
   win = new BrowserWindow({
-    width: WIN_W,
-    height: WIN_H,
+    width: w,
+    height: h,
     x: home.x,
     y: home.y,
     transparent: true,
@@ -278,11 +406,12 @@ function createWindow(): void {
 }
 
 function registerIpc(): void {
-  ipcMain.handle('pet:load', () => loadPet(petsDir, PET_ID));
+  ipcMain.handle('pet:load', () => petDef);
+  ipcMain.handle('pet:getScale', () => settings.catScale);
   ipcMain.handle('pet:list', () => listPets(petsDir));
 
   ipcMain.handle('pet:getState', () => {
-    const bounds = win ? win.getBounds() : { ...homePosition(), width: WIN_W, height: WIN_H };
+    const bounds = win ? win.getBounds() : { ...homePosition(), width: winSize().w, height: winSize().h };
     return { bounds, workArea: screen.getDisplayMatching(bounds).workArea };
   });
 
@@ -353,13 +482,24 @@ function registerIpc(): void {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
+  // Opening the app again (e.g. from the Start menu) while it's running opens settings.
+  app.on('second-instance', () => openSettings());
+
   app.whenReady().then(() => {
+    settings = readSettings(settingsPath());
+    petDef = loadPet(petsDir, PET_ID);
     registerIpc();
+    registerSettingsIpc();
     createWindow();
     setInterval(pollCursor, HOVER_POLL_MS);
     startDayWatchers();
     // Test scripts (PET_DEBUG=1) can reach the watchers to fake idle time and repos.
-    if (process.env.PET_DEBUG) Object.assign(globalThis, { petMain: { activity, git, setRepos, sendEvent } });
+    if (process.env.PET_DEBUG) {
+      Object.assign(globalThis, {
+        petMain: { activity, git, setRepos, sendEvent, openSettings, getStartWithWindows, setStartWithWindows,
+          get settings() { return settings; }, get settingsWin() { return settingsWin; }, get win() { return win; } },
+      });
+    }
     const notify = () => win?.webContents.send('pet:displayChanged');
     screen.on('display-metrics-changed', notify);
     screen.on('display-added', notify);

@@ -1,17 +1,32 @@
 # Desktop Pet 🐱
 
-A pixel cat that lives on your Windows taskbar. It walks, sits, grooms, stretches, yawns, naps, pounces, and talks in little speech bubbles. It has moods driven by its energy, happiness and hydration, and it remembers them between runs.
+A pixel cat that lives on your Windows taskbar. It walks, grooms, naps and pounces, reminds you to take breaks and drink water, nudges you to bed after 1 AM, and throws confetti when you commit or push code.
+
+![The cat walking, purring, grooming, celebrating a commit, drinking water with you and napping](docs/demo.gif)
 
 ## Run it
+
+From source:
 
 ```bash
 npm install
 npm start
 ```
 
+Or build a Windows installer (`release/Desktop Pet Setup <version>.exe`):
+
+```bash
+npm run dist
+```
+
+> The installer isn't code-signed. Windows SmartScreen will warn before installing, and on PCs with
+> **Smart App Control** turned on Windows blocks unsigned apps entirely. Signing the build (for example with
+> Azure Trusted Signing) fixes both. Running from source works either way.
+
 - **Click** the cat to pet it (hearts, purrs; click a sleeping cat and it wakes up startled).
 - **Drag** it anywhere; it falls back onto the taskbar of that screen. Drop it from high up and it's surprised.
-- **Right-click** the cat (or the tray icon) to see its stats and to **Give water**, **Give a treat**, **Play**, **Nap time**, **Bring cat back** or **Quit**.
+- **Right-click** the cat (or the tray icon) to see its stats and to **Give water**, **Give a treat**, **Play**, **Nap time**, open **Settings…**, **Bring cat back** or **Quit**.
+- **Settings** has the cat's size, reminder times, **Start with Windows**, and your watched git repos. Changes apply immediately.
 
 Clicks on the empty space around the cat pass straight through to the window behind it.
 
@@ -42,7 +57,7 @@ State is saved to `save.json` in the app's user-data folder. While the app is cl
 
 Only *active* time counts toward reminders. Reminders can be switched off under **Reminders** in the menu.
 On first run it looks for git repos in `~/projects`, `~/code`, `~/repos`, `~/src`, `~/dev`, `~/git` and `~/Documents/GitHub`; add or remove repos under **Watched repos**. Nothing is installed into your repos and nothing leaves your PC.
-Settings live in `settings.json` next to `save.json`.
+Settings live in `settings.json` next to `save.json` in `%APPDATA%\desktop-pet` (the same folder whether you run from source or installed).
 
 ## How it's built
 
@@ -53,7 +68,9 @@ Settings live in `settings.json` next to `save.json`.
 | Saving state safely | `src/main/save.ts` |
 | Idle/away/break/water/late-night detection | `src/main/activity.ts` |
 | Watching repos for commits and pushes | `src/main/gitWatcher.ts` |
-| Reminder and repo settings | `src/main/settings.ts` |
+| Reminder, size and repo settings | `src/main/settings.ts` |
+| Settings window | `static/settings.html`, `src/settings/settings.ts`, `src/main/settingsPreload.ts` |
+| App icon / demo GIF generators | `scripts/make-icon.js` (`npm run icon`), `scripts/record-demo.js` (`npm run demo-gif`) |
 | Daily commit streak | `src/renderer/streak.ts` |
 | Bridge between page and main process | `src/main/preload.ts` |
 | State machine, drawing, mouse, menu actions | `src/renderer/app.ts` |
@@ -89,5 +106,6 @@ Choosing which pet to show from a menu is planned for v2 (`PET_ID` in `src/main/
 
 - ~~**Week 2:** poses and emotions, stats, speech bubbles, saved state~~ ✅
 - ~~**Week 3:** reactions to your day: late night, breaks, water, idle sleep, git commits~~ ✅
-- **Week 4:** tray settings, start with Windows, `.exe` installer
+- ~~**Week 4:** settings window, start with Windows, `.exe` installer, demo GIF~~ ✅
+- **Next:** code signing so the installer runs under Smart App Control
 - **v2:** pet picker, accessories, Pomodoro mode, visiting friends' pets

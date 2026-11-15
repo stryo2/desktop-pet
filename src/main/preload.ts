@@ -27,5 +27,9 @@ contextBridge.exposeInMainWorld('petApi', {
     ipcRenderer.on('pet:event', (_e, event: unknown) => cb(event));
   },
   ready: () => ipcRenderer.send('pet:ready'),
+  getScale: () => ipcRenderer.invoke('pet:getScale'),
+  onScale: (cb: (msg: unknown) => void) => {
+    ipcRenderer.on('pet:scale', (_e, msg: unknown) => cb(msg));
+  },
   waterAck: () => ipcRenderer.send('pet:waterAck'),
 });

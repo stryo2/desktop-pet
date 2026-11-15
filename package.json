@@ -1,17 +1,50 @@
 {
   "name": "desktop-pet",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "A pixel cat that lives on your taskbar and reacts to your day.",
   "main": "dist/main/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.main.json && tsc -p tsconfig.renderer.json",
     "start": "npm run build && electron .",
-    "check-pets": "node scripts/check-pets.js"
+    "check-pets": "node scripts/check-pets.js",
+    "icon": "npm run build && electron scripts/make-icon.js",
+    "demo-gif": "npm run build && electron scripts/record-demo.js",
+    "dist": "npm run build && npm run check-pets && electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "local.desktop-pet",
+    "productName": "Desktop Pet",
+    "files": [
+      "dist/main/**",
+      "dist/renderer/**",
+      "dist/settings/**",
+      "static/**",
+      "pets/**",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Desktop Pet",
+      "runAfterFinish": true
+    }
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
     "electron": "^45.3.2",
+    "electron-builder": "^26.18.0",
+    "gifenc": "^1.0.3",
     "typescript": "^7.0.2"
   }
 }

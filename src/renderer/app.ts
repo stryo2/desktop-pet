@@ -9,7 +9,7 @@ import { currentStreak, recordCommit, type StreakState } from './streak.js';
 
 const api = window.petApi;
 
-const SCALE = 5; // each sprite pixel is 5x5 screen pixels
+let scale = 5; // each sprite pixel is scale x scale screen pixels (cat size; set in Settings)
 const TICK_MS = 33; // ~30 updates per second
 const GRAVITY = 2400; // px/s^2
 const WALK_SPEED = 45; // px/s
@@ -41,7 +41,7 @@ const effects = new Effects();
 let W = window.innerWidth;
 let H = window.innerHeight;
 let dpr = window.devicePixelRatio || 1;
-let px = Math.max(1, Math.round(SCALE * dpr)); // one sprite pixel, in device pixels
+let px = Math.max(1, Math.round(scale * dpr)); // one sprite pixel, in device pixels
 
 let pet!: PetDef;
 let workArea!: Rect;
@@ -78,7 +78,7 @@ function syncSize(): void {
   W = window.innerWidth;
   H = window.innerHeight;
   dpr = window.devicePixelRatio || 1;
-  px = Math.max(1, Math.round(SCALE * dpr));
+  px = Math.max(1, Math.round(scale * dpr));
   canvas.width = Math.round(W * dpr);
   canvas.height = Math.round(H * dpr);
   ctx.imageSmoothingEnabled = false;
@@ -632,7 +632,17 @@ async function refreshPlacement(): Promise<void> {
   lastSent = { x: bounds.x, y: bounds.y };
 }
 
+// Cat size changed in Settings: main has already resized the window around the cat's feet.
+api.onScale(({ scale: next, bounds }) => {
+  scale = next;
+  pos.x = bounds.x;
+  pos.y = bounds.y;
+  lastSent = { x: bounds.x, y: bounds.y };
+  syncSize();
+});
+
 async function start(): Promise<void> {
+  scale = await api.getScale();
   syncSize();
   window.addEventListener('resize', syncSize);
 
