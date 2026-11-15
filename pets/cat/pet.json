@@ -9,83 +9,193 @@
     "O": "#f2a65a",
     "D": "#d9813b",
     "W": "#fff4e6",
-    "P": "#f78fa7"
+    "P": "#f78fa7",
+    "T": "#6cc4f5"
+  },
+  "faces": {
+    "neutral": [".K..K.", ".K..K."],
+    "blink": ["......", "KK.KK."],
+    "happy": [".K..K.", "K.KK.K"],
+    "content": ["......", "KK.KK."],
+    "sleepy": ["KK.KK.", ".K..K."],
+    "sad": [".K..K.", ".K..K.", ".T...."],
+    "surprised": ["KK.KK.", "KK.KK."],
+    "love": [".K..K.", "K.KK.K", "P....P"],
+    "yawn": ["......", "KK.KK.", "......", "..KK.."]
   },
   "frames": {
-    "idle": [
-      "....................",
-      ".............K...K..",
-      "............KPK.KPK.",
-      "..K........KOOOOOOOK",
-      ".KOK.......KOOKOOKOK",
-      ".KOK.......KOOKOOKOK",
-      ".KOK.......KOWWPWWOK",
-      ".KOKKKKKKKKKOWWWWWOK",
-      ".KOODOODOODOOKWWWWK.",
-      "..KODOODOODOOOKKKK..",
-      "..KOOOOOOOOOOOOK....",
-      "..KOWWWWWWWWWWOK....",
-      "...KOOKKKKKKOOK.....",
-      "...KOOK....KOOK.....",
-      "...KKKK....KKKK....."
-    ],
-    "blink": [
-      "....................",
-      ".............K...K..",
-      "............KPK.KPK.",
-      "..K........KOOOOOOOK",
-      ".KOK.......KOOOOOOOK",
-      ".KOK.......KOOKOOKOK",
-      ".KOK.......KOWWPWWOK",
-      ".KOKKKKKKKKKOWWWWWOK",
-      ".KOODOODOODOOKWWWWK.",
-      "..KODOODOODOOOKKKK..",
-      "..KOOOOOOOOOOOOK....",
-      "..KOWWWWWWWWWWOK....",
-      "...KOOKKKKKKOOK.....",
-      "...KOOK....KOOK.....",
-      "...KKKK....KKKK....."
-    ],
-    "walkSpread": [
-      "....................",
-      ".............K...K..",
-      "............KPK.KPK.",
-      "..K........KOOOOOOOK",
-      ".KOK.......KOOKOOKOK",
-      ".KOK.......KOOKOOKOK",
-      ".KOK.......KOWWPWWOK",
-      ".KOKKKKKKKKKOWWWWWOK",
-      ".KOODOODOODOOKWWWWK.",
-      "..KODOODOODOOOKKKK..",
-      "..KOOOOOOOOOOOOK....",
-      "..KOWWWWWWWWWWOK....",
-      "...KOOKKKKKKOOK.....",
-      "..KOOK......KOOK....",
-      "..KKKK......KKKK...."
-    ],
-    "walkTogether": [
-      "....................",
-      ".............K...K..",
-      "............KPK.KPK.",
-      "..K........KOOOOOOOK",
-      ".KOK.......KOOKOOKOK",
-      ".KOK.......KOOKOOKOK",
-      ".KOK.......KOWWPWWOK",
-      ".KOKKKKKKKKKOWWWWWOK",
-      ".KOODOODOODOOKWWWWK.",
-      "..KODOODOODOOOKKKK..",
-      "..KOOOOOOOOOOOOK....",
-      "..KOWWWWWWWWWWOK....",
-      "...KOOKKKKKKOOK.....",
-      "....KOOK..KOOK......",
-      "....KKKK..KKKK......"
-    ]
+    "stand": {
+      "face": [13, 4],
+      "rows": [
+        "....................",
+        ".............K...K..",
+        "............KPK.KPK.",
+        "..K........KOOOOOOOK",
+        ".KOK.......KOOOOOOOK",
+        ".KOK.......KOOOOOOOK",
+        ".KOK.......KOWWPWWOK",
+        ".KOKKKKKKKKKOWWWWWOK",
+        ".KOODOODOODOOKWWWWK.",
+        "..KODOODOODOOOKKKK..",
+        "..KOOOOOOOOOOOOK....",
+        "..KOWWWWWWWWWWOK....",
+        "...KOOKKKKKKOOK.....",
+        "...KOOK....KOOK.....",
+        "...KKKK....KKKK....."
+      ]
+    },
+    "walkSpread": {
+      "face": [13, 4],
+      "rows": [
+        "....................",
+        ".............K...K..",
+        "............KPK.KPK.",
+        "..K........KOOOOOOOK",
+        ".KOK.......KOOOOOOOK",
+        ".KOK.......KOOOOOOOK",
+        ".KOK.......KOWWPWWOK",
+        ".KOKKKKKKKKKOWWWWWOK",
+        ".KOODOODOODOOKWWWWK.",
+        "..KODOODOODOOOKKKK..",
+        "..KOOOOOOOOOOOOK....",
+        "..KOWWWWWWWWWWOK....",
+        "...KOOKKKKKKOOK.....",
+        "..KOOK......KOOK....",
+        "..KKKK......KKKK...."
+      ]
+    },
+    "walkTogether": {
+      "face": [13, 4],
+      "rows": [
+        "....................",
+        ".............K...K..",
+        "............KPK.KPK.",
+        "..K........KOOOOOOOK",
+        ".KOK.......KOOOOOOOK",
+        ".KOK.......KOOOOOOOK",
+        ".KOK.......KOWWPWWOK",
+        ".KOKKKKKKKKKOWWWWWOK",
+        ".KOODOODOODOOKWWWWK.",
+        "..KODOODOODOOOKKKK..",
+        "..KOOOOOOOOOOOOK....",
+        "..KOWWWWWWWWWWOK....",
+        "...KOOKKKKKKOOK.....",
+        "....KOOK..KOOK......",
+        "....KKKK..KKKK......"
+      ]
+    },
+    "sit": {
+      "face": [11, 4],
+      "rows": [
+        "....................",
+        "...........K...K....",
+        "..........KPK.KPK...",
+        ".........KOOOOOOOK..",
+        ".........KOOOOOOOK..",
+        ".........KOOOOOOOK..",
+        ".........KOWWPWWOK..",
+        ".......KKOOWWWWWOK..",
+        ".K...KKODOOKWWWWK...",
+        "KOK.KODOODOWWWWWK...",
+        "KOKKODOODOOOWWWWK...",
+        "KOKKOODOODOOKWWWK...",
+        "KOKKOOOOOOOOKWWWK...",
+        "KOOOOOOOOOOOKWWWK...",
+        ".KKKKKKKKKKKKWWWWK.."
+      ]
+    },
+    "groom": {
+      "face": [11, 4],
+      "rows": [
+        "....................",
+        "...........K...K....",
+        "..........KPK.KPK...",
+        ".........KOOOOOOOK..",
+        ".........KOOOOOOOK..",
+        ".........KOOOOOOOK..",
+        ".........KOWWPWWOK..",
+        ".......KKOOWWWWWOK..",
+        ".K...KKODOOKWWWWKWK.",
+        "KOK.KODOODOWWWWWKWK.",
+        "KOKKODOODOOOWWWWKK..",
+        "KOKKOODOODOOKWWWK...",
+        "KOKKOOOOOOOOKWWWK...",
+        "KOOOOOOOOOOOKWWWK...",
+        ".KKKKKKKKKKKKWWWWK.."
+      ]
+    },
+    "lie": {
+      "face": [13, 9],
+      "rows": [
+        "....................",
+        "....................",
+        "....................",
+        "....................",
+        "....................",
+        "....................",
+        ".............K...K..",
+        "............KPK.KPK.",
+        "...........KOOOOOOOK",
+        "....KKKKKKKKOOOOOOOK",
+        "..KODOODOODOOOOOOOOK",
+        ".KOODOODOODOOWWPWWOK",
+        ".KOOOOOOOOOOOWWWWWOK",
+        ".KOWWWWWWWWWOKWWWWK.",
+        "..KKKKKKKKKKKKKKKK.."
+      ]
+    },
+    "stretch": {
+      "face": [13, 9],
+      "rows": [
+        "....................",
+        "....................",
+        ".K..................",
+        "KOK.................",
+        "KOKKKKK.............",
+        "KOODOODK............",
+        ".KODOODOK....K...K..",
+        "..KOODOODK..KPK.KPK.",
+        "..KODOODOOKKOOOOOOOK",
+        "..KOOOOOOOOOOOOOOOOK",
+        "..KOWWWOOOOOOOOOOOOK",
+        "..KOOKKKKKKKOWWPWWOK",
+        "..KOOK.....KOWWWWWOK",
+        "..KOOK......KWWWWK..",
+        "..KKKK....KWWWWWWWWK"
+      ]
+    },
+    "headDown": {
+      "face": [13, 10],
+      "rows": [
+        "....................",
+        "....................",
+        "....................",
+        "....................",
+        "....................",
+        "..K.................",
+        ".KOK................",
+        ".KOKKKKKKKKK.K...K..",
+        ".KOODOODOODOKPK.KPK.",
+        "..KODOODOODKOOOOOOOK",
+        "..KOOOOOOOOKOOOOOOOK",
+        "..KOWWWWWWWKOOOOOOOK",
+        "...KOOKKKKKKOWWPWWOK",
+        "...KOOK....KOOKWWWK.",
+        "...KKKK....KKKK....."
+      ]
+    }
   },
   "animations": {
-    "idle": { "frames": ["idle", "idle", "idle", "idle", "idle", "blink", "idle", "idle"], "fps": 4 },
-    "walk": { "frames": ["idle", "walkSpread", "idle", "walkTogether"], "fps": 8 },
+    "idle": { "frames": ["stand"], "fps": 1 },
+    "walk": { "frames": ["stand", "walkSpread", "stand", "walkTogether"], "fps": 8 },
+    "sit": { "frames": ["sit"], "fps": 1 },
+    "groom": { "frames": ["groom", "groom", "sit"], "fps": 4 },
+    "sleep": { "frames": ["lie"], "fps": 1 },
+    "stretch": { "frames": ["stretch"], "fps": 1 },
+    "crouch": { "frames": ["lie"], "fps": 1 },
+    "leap": { "frames": ["walkSpread"], "fps": 1 },
+    "eat": { "frames": ["headDown"], "fps": 1 },
     "dragged": { "frames": ["walkSpread", "walkTogether"], "fps": 6 },
-    "fall": { "frames": ["walkSpread"], "fps": 1 },
-    "happy": { "frames": ["blink"], "fps": 1 }
+    "fall": { "frames": ["walkSpread"], "fps": 1 }
   }
 }

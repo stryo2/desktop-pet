@@ -1,10 +1,11 @@
 import { app, BrowserWindow, ipcMain, Menu, nativeImage, screen, Tray } from 'electron';
 import * as path from 'node:path';
 import { listPets, loadPet } from './petLoader.js';
+import { parseSave, readSave, writeSave, type SaveData } from './save.js';
 
-// The window is a little bigger than the cat, leaving room above it for hops and hearts.
+// The window is a little bigger than the cat, leaving room above it for hops, hearts and speech bubbles.
 const WIN_W = 160;
-const WIN_H = 130;
+const WIN_H = 150;
 
 // v2: read this from settings and let the user pick from listPets().
 const PET_ID = 'cat';
@@ -62,8 +63,28 @@ function moveTo(x: number, y: number): void {
   win?.setBounds({ x: Math.round(x), y: Math.round(y), width: WIN_W, height: WIN_H });
 }
 
+const savePath = () => path.join(app.getPath('userData'), 'save.json');
+let lastSave: SaveData | null = null;
+
+function sendAction(action: 'water' | 'treat' | 'play' | 'nap'): void {
+  win?.webContents.send('pet:action', action);
+}
+
+function statsLine(): string {
+  if (!lastSave) return 'Waking up…';
+  const s = lastSave.stats;
+  return `⚡ ${Math.round(s.energy)}   ❤ ${Math.round(s.happiness)}   💧 ${Math.round(s.hydration)}`;
+}
+
 function buildMenu(): Menu {
   return Menu.buildFromTemplate([
+    { label: statsLine(), enabled: false },
+    { type: 'separator' },
+    { label: 'Give water', click: () => sendAction('water') },
+    { label: 'Give a treat', click: () => sendAction('treat') },
+    { label: 'Play', click: () => sendAction('play') },
+    { label: 'Nap time', click: () => sendAction('nap') },
+    { type: 'separator' },
     {
       label: 'Bring cat back',
       click: () => {
@@ -109,7 +130,8 @@ function createWindow(): void {
   // Clicks pass through to whatever is behind the window, but mouse moves are still
   // forwarded so the page can notice when the cursor is over the cat.
   win.setIgnoreMouseEvents(true, { forward: true });
-  win.loadFile(path.join(rootDir, 'static', 'index.html'));
+  // PET_DEBUG=1 exposes a test hook in the page (window.petDebug).
+  win.loadFile(path.join(rootDir, 'static', 'index.html'), process.env.PET_DEBUG ? { query: { debug: '1' } } : {});
   win.once('ready-to-show', () => win?.showInactive());
   win.on('closed', () => (win = null));
 }
@@ -141,6 +163,23 @@ function registerIpc(): void {
     if (typeof d !== 'boolean') return;
     dragging = d;
     pollCursor();
+  });
+
+  ipcMain.handle('pet:loadSave', () => {
+    lastSave = readSave(savePath());
+    return lastSave;
+  });
+
+  ipcMain.on('pet:save', (_e, raw: unknown) => {
+    const data = parseSave(raw);
+    if (!data) return;
+    lastSave = data;
+    try {
+      writeSave(savePath(), data);
+    } catch (err) {
+      console.error('Could not save pet state:', err);
+    }
+    tray?.setContextMenu(buildMenu()); // keep the stats line fresh
   });
 
   ipcMain.on('pet:showMenu', () => {

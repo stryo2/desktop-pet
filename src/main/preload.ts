@@ -18,4 +18,9 @@ contextBridge.exposeInMainWorld('petApi', {
   onDisplayChanged: (cb: () => void) => {
     ipcRenderer.on('pet:displayChanged', () => cb());
   },
+  loadSave: () => ipcRenderer.invoke('pet:loadSave'),
+  save: (data: unknown) => ipcRenderer.send('pet:save', data),
+  onAction: (cb: (action: string) => void) => {
+    ipcRenderer.on('pet:action', (_e, action: string) => cb(action));
+  },
 });

@@ -5,15 +5,40 @@ interface Rect {
   height: number;
 }
 
+interface PetFrame {
+  rows: string[];
+  face?: [number, number];
+}
+
 interface PetDef {
   id: string;
   name: string;
   width: number;
   height: number;
   palette: Record<string, string | null>;
-  frames: Record<string, string[]>;
+  frames: Record<string, PetFrame>;
+  faces: Record<string, string[]>;
   animations: Record<string, { frames: string[]; fps: number }>;
 }
+
+/** 0–100 each. */
+interface PetStats {
+  energy: number;
+  happiness: number;
+  hydration: number;
+}
+
+interface SaveData {
+  version: 1;
+  petId: string;
+  stats: PetStats;
+  x: number | null;
+  lastSeen: number; // ms timestamp
+  timesPetted: number;
+}
+
+/** Things you can ask the cat to do from the tray / right-click menu. */
+type MenuAction = 'water' | 'treat' | 'play' | 'nap';
 
 interface PetApi {
   loadPet(): Promise<PetDef>;
@@ -27,6 +52,9 @@ interface PetApi {
   showMenu(): void;
   setTrayIcon(dataUrl: string): void;
   onDisplayChanged(cb: () => void): void;
+  loadSave(): Promise<SaveData | null>;
+  save(data: SaveData): void;
+  onAction(cb: (action: MenuAction) => void): void;
 }
 
 interface Window {
