@@ -1,0 +1,91 @@
+{
+  "id": "cat",
+  "name": "Cat",
+  "width": 20,
+  "height": 15,
+  "palette": {
+    ".": null,
+    "K": "#2b2233",
+    "O": "#f2a65a",
+    "D": "#d9813b",
+    "W": "#fff4e6",
+    "P": "#f78fa7"
+  },
+  "frames": {
+    "idle": [
+      "....................",
+      ".............K...K..",
+      "............KPK.KPK.",
+      "..K........KOOOOOOOK",
+      ".KOK.......KOOKOOKOK",
+      ".KOK.......KOOKOOKOK",
+      ".KOK.......KOWWPWWOK",
+      ".KOKKKKKKKKKOWWWWWOK",
+      ".KOODOODOODOOKWWWWK.",
+      "..KODOODOODOOOKKKK..",
+      "..KOOOOOOOOOOOOK....",
+      "..KOWWWWWWWWWWOK....",
+      "...KOOKKKKKKOOK.....",
+      "...KOOK....KOOK.....",
+      "...KKKK....KKKK....."
+    ],
+    "blink": [
+      "....................",
+      ".............K...K..",
+      "............KPK.KPK.",
+      "..K........KOOOOOOOK",
+      ".KOK.......KOOOOOOOK",
+      ".KOK.......KOOKOOKOK",
+      ".KOK.......KOWWPWWOK",
+      ".KOKKKKKKKKKOWWWWWOK",
+      ".KOODOODOODOOKWWWWK.",
+      "..KODOODOODOOOKKKK..",
+      "..KOOOOOOOOOOOOK....",
+      "..KOWWWWWWWWWWOK....",
+      "...KOOKKKKKKOOK.....",
+      "...KOOK....KOOK.....",
+      "...KKKK....KKKK....."
+    ],
+    "walkSpread": [
+      "....................",
+      ".............K...K..",
+      "............KPK.KPK.",
+      "..K........KOOOOOOOK",
+      ".KOK.......KOOKOOKOK",
+      ".KOK.......KOOKOOKOK",
+      ".KOK.......KOWWPWWOK",
+      ".KOKKKKKKKKKOWWWWWOK",
+      ".KOODOODOODOOKWWWWK.",
+      "..KODOODOODOOOKKKK..",
+      "..KOOOOOOOOOOOOK....",
+      "..KOWWWWWWWWWWOK....",
+      "...KOOKKKKKKOOK.....",
+      "..KOOK......KOOK....",
+      "..KKKK......KKKK...."
+    ],
+    "walkTogether": [
+      "....................",
+      ".............K...K..",
+      "............KPK.KPK.",
+      "..K........KOOOOOOOK",
+      ".KOK.......KOOKOOKOK",
+      ".KOK.......KOOKOOKOK",
+      ".KOK.......KOWWPWWOK",
+      ".KOKKKKKKKKKOWWWWWOK",
+      ".KOODOODOODOOKWWWWK.",
+      "..KODOODOODOOOKKKK..",
+      "..KOOOOOOOOOOOOK....",
+      "..KOWWWWWWWWWWOK....",
+      "...KOOKKKKKKOOK.....",
+      "....KOOK..KOOK......",
+      "....KKKK..KKKK......"
+    ]
+  },
+  "animations": {
+    "idle": { "frames": ["idle", "idle", "idle", "idle", "idle", "blink", "idle", "idle"], "fps": 4 },
+    "walk": { "frames": ["idle", "walkSpread", "idle", "walkTogether"], "fps": 8 },
+    "dragged": { "frames": ["walkSpread", "walkTogether"], "fps": 6 },
+    "fall": { "frames": ["walkSpread"], "fps": 1 },
+    "happy": { "frames": ["blink"], "fps": 1 }
+  }
+}
