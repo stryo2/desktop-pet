@@ -197,5 +197,51 @@
     "eat": { "frames": ["headDown"], "fps": 1 },
     "dragged": { "frames": ["walkSpread", "walkTogether"], "fps": 6 },
     "fall": { "frames": ["walkSpread"], "fps": 1 }
+  },
+  "personality": {
+    "walkSpeed": 45,
+    "sneakSpeed": 20,
+    "play": "pounce",
+    "washesFood": false,
+    "nightEnergyDrain": 0.5,
+    "sleepyAtNight": true,
+    "weights": { "idle": 15, "walk": 30, "sit": 20, "groom": 10, "stretch": 6, "yawn": 3, "sleep": 3, "play": 8, "look": 0, "sneak": 0 },
+    "night": { "add": { "sleep": 15, "yawn": 8 }, "scale": { "play": 0.5 } },
+    "midday": {},
+    "rates": {
+      "awake": { "energy": -0.5, "happiness": -0.25, "hydration": -0.4 },
+      "active": { "energy": -1.5, "happiness": -0.25, "hydration": -0.6 },
+      "sleeping": { "energy": 20, "happiness": -0.1, "hydration": -0.15 }
+    },
+    "lines": {
+      "hello": ["hi! 👋"],
+      "missedYou": ["missed you!"],
+      "sleepy": ["so sleepy…"],
+      "yawn": ["*yawn*"],
+      "groom": ["*lick lick*"],
+      "sad": ["pet me…?", "feeling lonely", "…"],
+      "thirsty": ["water? 💧", "so thirsty…"],
+      "dragged": ["hey!", "whoa!", "wheee", "put me down!"],
+      "wokeUp": ["good nap!", "*stretch*", "mrrp"],
+      "played": ["got it!", "pounce!", "hehe"],
+      "drank": ["ahh~", "refreshing!", "thanks!"],
+      "ate": ["yum!", "nom nom", "more?"],
+      "poked": ["mrrp?!", "huh?!", "…5 more minutes"],
+      "cheers": ["cheers! 🥤"],
+      "pettedLots": ["ok ok!", "so much love!", "purrrrr"],
+      "petted": ["purr~"],
+      "tooTired": ["too tired…"],
+      "napTime": ["nap time…"],
+      "amended": ["amended ✨"],
+      "commit": ["nice commit!", "ship it! 🚀", "{repo} +1!", "commit #{n} today!"],
+      "merged": ["merged! 🎉"],
+      "push": ["pushed! 🚀", "to the cloud! ☁️", "shipped! 🎉"],
+      "back": ["oh hi!", "you're back!", "mrrp!"],
+      "backLong": ["welcome back!"],
+      "breakDue": ["{minutes} min nonstop… stretch break? 🧘", "time to stretch! 🧘", "rest your eyes a bit? 👀"],
+      "breakTaken": ["nice break! ✨", "refreshed? 😺"],
+      "waterDue": ["water break? 💧 click me when you drink!"],
+      "lateNight": ["it's late… sleep? 😴", "bedtime, human 🌙", "go to sleep! 💤"]
+    }
   }
 }

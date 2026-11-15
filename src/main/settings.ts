@@ -8,7 +8,8 @@ export interface Settings {
   lateNightNudges: boolean;
   breakMinutes: number; // active minutes before suggesting a break
   waterMinutes: number; // active minutes between water reminders
-  catScale: number; // screen pixels per sprite pixel (cat size)
+  catScale: number; // screen pixels per sprite pixel (pet size)
+  petId: string; // which pet from pets/ (main falls back to the cat if it is missing)
   /** Git repos to watch. null = not set up yet (we look for repos on first run). */
   repos: string[] | null;
 }
@@ -21,6 +22,7 @@ export const DEFAULT_SETTINGS: Settings = {
   breakMinutes: 50,
   waterMinutes: 75,
   catScale: 5,
+  petId: 'cat',
   repos: null,
 };
 
@@ -63,6 +65,7 @@ export function readSettings(file: string): Settings {
     breakMinutes: ranged(raw.breakMinutes, d.breakMinutes, LIMITS.breakMinutes),
     waterMinutes: ranged(raw.waterMinutes, d.waterMinutes, LIMITS.waterMinutes),
     catScale: ranged(raw.catScale, d.catScale, LIMITS.catScale),
+    petId: typeof raw.petId === 'string' ? raw.petId : d.petId,
     repos: Array.isArray(raw.repos) ? raw.repos.filter((r): r is string => typeof r === 'string') : null,
   };
 }

@@ -7,9 +7,19 @@ interface SettingsView {
   breakMinutes: number;
   waterMinutes: number;
   catScale: number;
+  petId: string;
+  pets: PetPreview[];
   repos: string[];
   startWithWindows: boolean;
   limits: { breakMinutes: [number, number]; waterMinutes: [number, number]; catScale: [number, number] };
+}
+
+/** A pet's sitting pose as text rows, drawn as a thumbnail in the picker. */
+interface PetPreview {
+  id: string;
+  name: string;
+  palette: Record<string, string | null>;
+  rows: string[];
 }
 
 interface SettingsApi {
@@ -32,6 +42,33 @@ const checks = ['breakReminders', 'waterReminders', 'lateNightNudges', 'startWit
 const numbers = ['breakMinutes', 'waterMinutes'] as const;
 const status = el<HTMLSpanElement>('status');
 const repoList = el<HTMLUListElement>('repos');
+const petList = el<HTMLDivElement>('pets');
+const THUMB_SCALE = 3;
+
+function petButton(p: PetPreview, chosen: boolean): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.setAttribute('aria-pressed', String(chosen));
+  const canvas = document.createElement('canvas');
+  canvas.width = (p.rows[0]?.length ?? 0) * THUMB_SCALE;
+  canvas.height = p.rows.length * THUMB_SCALE;
+  const ctx = canvas.getContext('2d')!;
+  p.rows.forEach((row, y) => {
+    [...row].forEach((ch, x) => {
+      const color = p.palette[ch];
+      if (!color) return;
+      ctx.fillStyle = color;
+      ctx.fillRect(x * THUMB_SCALE, y * THUMB_SCALE, THUMB_SCALE, THUMB_SCALE);
+    });
+  });
+  const name = document.createElement('span');
+  name.textContent = p.name;
+  button.append(canvas, name);
+  button.addEventListener('click', () => {
+    if (!chosen) void update({ petId: p.id });
+  });
+  return button;
+}
 
 let statusTimer = 0;
 function saved(): void {
@@ -44,6 +81,8 @@ function saved(): void {
 const basename = (p: string) => p.split(/[\\/]/).filter(Boolean).pop() ?? p;
 
 function render(v: SettingsView): void {
+  petList.replaceChildren(...(v.pets.length > 1 ? v.pets.map((p) => petButton(p, p.id === v.petId)) : []));
+
   catScale.min = String(v.limits.catScale[0]);
   catScale.max = String(v.limits.catScale[1]);
   catScale.value = String(v.catScale);
@@ -87,7 +126,7 @@ async function update(patch: Partial<SettingsView>): Promise<void> {
   saved();
 }
 
-// Cat size: the cat on your desktop resizes live as you drag.
+// Size: the pet on your desktop resizes live as you drag.
 let sizeTimer = 0;
 catScale.addEventListener('input', () => {
   const v = Number(catScale.value);

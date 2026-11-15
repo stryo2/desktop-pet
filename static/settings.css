@@ -212,3 +212,39 @@ input:focus-visible {
   outline: 2px solid var(--accent-ink);
   outline-offset: 2px;
 }
+
+.pets {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.pets:empty {
+  display: none;
+}
+
+.pets button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px 8px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  font-weight: 400;
+}
+
+.pets button:hover {
+  border-color: var(--accent);
+}
+
+.pets button[aria-pressed='true'] {
+  border-color: var(--accent-ink);
+  background: #fff3e2;
+  font-weight: 600;
+}
+
+.pets canvas {
+  image-rendering: pixelated;
+}

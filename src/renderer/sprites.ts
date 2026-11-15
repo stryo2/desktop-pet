@@ -64,4 +64,14 @@ export const PROPS = {
   foodBowl: gridFromRows(['KCFCFCK', 'KRRRRRK', '.KKKKK.'], {
     '.': null, K: OUTLINE, C: '#a8693a', F: '#d99a5b', R: '#e0565b',
   }),
+  // Treasures a rummaging pet digs up.
+  coin: gridFromRows(['.KKK.', 'KYYYK', 'KYWYK', 'KYYYK', '.KKK.'], {
+    '.': null, K: OUTLINE, Y: '#f5c542', W: '#fff3b0',
+  }),
+  bottleCap: gridFromRows(['.KKK.', 'KRRRK', 'KRWRK', 'KKKKK'], {
+    '.': null, K: OUTLINE, R: '#e0565b', W: '#ffd9d9',
+  }),
+  sock: gridFromRows(['..KKK', '..KWK', '..KBK', '.KKBK', 'KBBBK', 'KKKKK'], {
+    '.': null, K: OUTLINE, W: '#ffffff', B: '#5b8def',
+  }),
 };

@@ -8,6 +8,27 @@ interface Rect {
 interface PetFrame {
   rows: string[];
   face?: [number, number];
+  hold?: [number, number];
+}
+
+interface TimeMods {
+  add?: Record<string, number>;
+  scale?: Record<string, number>;
+}
+
+/** What makes one pet behave differently from another (see pets/<id>/pet.json). */
+interface Personality {
+  walkSpeed: number;
+  sneakSpeed: number;
+  play: 'pounce' | 'rummage';
+  washesFood: boolean;
+  nightEnergyDrain: number;
+  sleepyAtNight: boolean;
+  weights: Record<string, number>;
+  night: TimeMods;
+  midday: TimeMods;
+  rates: Record<'awake' | 'active' | 'sleeping', PetStats>;
+  lines: Record<string, string[]>;
 }
 
 interface PetDef {
@@ -19,6 +40,8 @@ interface PetDef {
   frames: Record<string, PetFrame>;
   faces: Record<string, string[]>;
   animations: Record<string, { frames: string[]; fps: number }>;
+  poses?: Record<string, string>;
+  personality: Personality;
 }
 
 /** 0–100 each. */

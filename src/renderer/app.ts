@@ -1,7 +1,7 @@
 // The pet's body: runs its behaviour, draws it, and handles the mouse and menu.
 // The window itself is the pet's position on screen: walking, leaping and falling move the window.
 
-import { chooseNext, isLateNight, pick, restingMood, type Choice } from './brain.js';
+import { chooseNext, isLateNight, pick, restingMood, timeOfDay, type Choice, type TimeOfDay } from './brain.js';
 import { Effects } from './effects.js';
 import { composeFrame, drawGrid, PROPS, type Emotion, type Grid } from './sprites.js';
 import { addStats, applyTimeAway, freshStats, tickStats, type Activity } from './stats.js';
@@ -9,28 +9,34 @@ import { currentStreak, recordCommit, type StreakState } from './streak.js';
 
 const api = window.petApi;
 
-let scale = 5; // each sprite pixel is scale x scale screen pixels (cat size; set in Settings)
+let scale = 5; // each sprite pixel is scale x scale screen pixels (pet size; set in Settings)
 const TICK_MS = 33; // ~30 updates per second
 const GRAVITY = 2400; // px/s^2
-const WALK_SPEED = 45; // px/s
 const LEAP_SPEED = 140; // px/s
 const DRAG_THRESHOLD = 4; // px of movement before a press counts as a drag
 const SAVE_EVERY = 15; // seconds
 
+// look, sneak, rummage, treasure and wash are only used by pets that have the art for them.
 type State =
   | 'idle' | 'walk' | 'sit' | 'groom' | 'stretch' | 'yawn' | 'sleep' | 'crouch' | 'leap'
   | 'sad' | 'thirsty' | 'eat' | 'happy' | 'surprised' | 'dragged' | 'fall'
-  | 'celebrate' | 'remindWater';
+  | 'celebrate' | 'remindWater'
+  | 'look' | 'sneak' | 'rummage' | 'treasure' | 'wash';
 
-/** Which of the pet's animations each state uses. */
+/** Which of the pet's animations each state uses (a pet's "poses" can override these). */
 const ANIM: Record<State, string> = {
   idle: 'idle', walk: 'walk', sit: 'sit', groom: 'groom', stretch: 'stretch', yawn: 'sit',
   sleep: 'sleep', crouch: 'crouch', leap: 'leap', sad: 'sit', thirsty: 'sit', eat: 'eat',
   happy: 'idle', surprised: 'idle', dragged: 'dragged', fall: 'fall',
   celebrate: 'idle', remindWater: 'sit',
+  look: 'upright', sneak: 'sneak', rummage: 'rummage', treasure: 'upright', wash: 'wash',
 };
 
-const ACTIVITY: Partial<Record<State, Activity>> = { sleep: 'sleeping', walk: 'active', crouch: 'active', leap: 'active' };
+const ACTIVITY: Partial<Record<State, Activity>> = {
+  sleep: 'sleeping', walk: 'active', crouch: 'active', leap: 'active', sneak: 'active', rummage: 'active',
+};
+
+const TREASURES = [PROPS.coin, PROPS.bottleCap, PROPS.sock];
 
 const canvas = document.getElementById('stage') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -60,6 +66,7 @@ let facing: 1 | -1 = 1; // sprites face right; -1 mirrors them
 let vy = 0;
 let fallFrom = 0;
 let food: 'water' | 'treat' = 'water';
+let treasure: Grid = TREASURES[0];
 let blinkIn = 3;
 let blinkLeft = 0;
 let zTimer = 0;
@@ -73,6 +80,19 @@ const groundY = () => workArea.y + workArea.height - H;
 const minX = () => workArea.x;
 const maxX = () => workArea.x + workArea.width - W;
 const clampX = (x: number) => Math.min(Math.max(x, minX()), maxX());
+
+const hasAnim = (name: string) => !!pet.animations[name];
+/** One of the pet's own lines for a moment, with {repo}, {n} or {minutes} filled in. */
+function line(group: string, vars: Record<string, string | number> = {}): string {
+  const text = pick(pet.personality.lines[group] ?? ['…']);
+  return text.replace(/\{(\w+)\}/g, (whole, key: string) => (key in vars ? String(vars[key]) : whole));
+}
+/** Walks away from a screen edge if it's close to one, otherwise either way. */
+function pickDirection(): void {
+  const nearLeft = pos.x - minX() < 150;
+  const nearRight = maxX() - pos.x < 150;
+  facing = nearLeft ? 1 : nearRight ? -1 : Math.random() < 0.5 ? 1 : -1;
+}
 
 function syncSize(): void {
   W = window.innerWidth;
@@ -124,40 +144,59 @@ function setState(next: State, duration = 0): void {
   switch (next) {
     case 'sleep':
       zTimer = 0.4;
-      if (stats.energy < 30 && Math.random() < 0.5) effects.say('so sleepy…');
+      if (stats.energy < 30 && Math.random() < 0.5) effects.say(line('sleepy'));
       break;
     case 'yawn':
-      if (Math.random() < 0.3) effects.say('*yawn*', 1.5);
+      if (Math.random() < 0.3) effects.say(line('yawn'), 1.5);
       break;
     case 'groom':
-      if (Math.random() < 0.25) effects.say('*lick lick*', 1.8);
+      if (Math.random() < 0.25) effects.say(line('groom'), 1.8);
       break;
     case 'sad':
-      effects.say(pick(['pet me…?', 'feeling lonely', '…']), 3);
+      effects.say(line('sad'), 3);
       break;
     case 'thirsty':
-      effects.say(pick(['water? 💧', 'so thirsty…']), 3);
+      effects.say(line('thirsty'), 3);
       break;
     case 'surprised':
       if (!effects.saying) effects.say('!', 1);
       break;
     case 'dragged':
-      if (Math.random() < 0.6) effects.say(pick(['hey!', 'whoa!', 'wheee', 'put me down!']), 1.8);
+      if (Math.random() < 0.6) effects.say(line('dragged'), 1.8);
+      break;
+    case 'look':
+      if (!effects.saying && Math.random() < 0.4) effects.say(line('look'), 1.8);
+      break;
+    case 'sneak':
+      if (Math.random() < 0.3) effects.say(line('sneak'), 1.8);
+      break;
+    case 'wash':
+      effects.say(line('washFood'), 1.6);
       break;
   }
+}
+
+/** Play is a pounce, or for a pet that rummages, digging around until it finds something. */
+function startPlay(): void {
+  if (pet.personality.play === 'rummage' && hasAnim('rummage')) setState('rummage', rand(2, 3));
+  else setState('crouch', 1);
 }
 
 /** Turns the brain's choice into a state with a sensible duration. */
 function doChoice(choice: Choice): void {
   switch (choice) {
-    case 'walk': {
-      const nearLeft = pos.x - minX() < 150;
-      const nearRight = maxX() - pos.x < 150;
-      facing = nearLeft ? 1 : nearRight ? -1 : Math.random() < 0.5 ? 1 : -1;
+    case 'walk':
+      pickDirection();
       return setState('walk', rand(2, 6));
-    }
+    case 'sneak':
+      if (!hasAnim('sneak')) return setState('idle', rand(3, 8));
+      pickDirection();
+      return setState('sneak', rand(3, 6));
+    case 'look':
+      if (!hasAnim('upright')) return setState('idle', rand(3, 8));
+      return setState('look', rand(1.5, 3));
     case 'play':
-      return setState('crouch', 1);
+      return startPlay();
     case 'sit':
       return setState('sit', rand(4, 10));
     case 'groom':
@@ -188,9 +227,11 @@ function headPoint(grid: Grid): { x: number; y: number } {
 function update(dt: number): void {
   stateTime += dt;
   animTime += dt;
+  const p = pet.personality;
   const late = isLateNight();
-  tickStats(stats, dt, ACTIVITY[state] ?? 'awake');
-  if (late && state !== 'sleep') addStats(stats, { energy: (-0.5 * dt) / 60 }); // tired faster at night
+  tickStats(stats, dt, p.rates[ACTIVITY[state] ?? 'awake']);
+  // Tired faster at night (unless it's a night animal).
+  if (late && state !== 'sleep') addStats(stats, { energy: (-p.nightEnergyDrain * dt) / 60 });
 
   // Standing on something? If the taskbar moved or the cat is in the air, fall or snap down.
   if (state !== 'dragged' && state !== 'fall' && state !== 'leap') {
@@ -207,14 +248,31 @@ function update(dt: number): void {
   switch (state) {
     case 'idle':
     case 'sit':
-      if (done) doChoice(chooseNext(stats, late));
+      if (done) doChoice(chooseNext(stats, p, timeOfDay()));
       break;
     case 'walk':
-      pos.x += facing * WALK_SPEED * dt;
+    case 'sneak':
+      pos.x += facing * (state === 'walk' ? p.walkSpeed : p.sneakSpeed) * dt;
       if (pos.x <= minX()) facing = 1;
       if (pos.x >= maxX()) facing = -1;
       pos.x = clampX(pos.x);
       if (done) setState('idle', rand(3, 8));
+      break;
+    case 'look':
+    case 'treasure':
+      if (done) setState('idle', rand(2, 5));
+      break;
+    case 'rummage':
+      if (done) {
+        // Found something! Hold it up proudly.
+        treasure = pick(TREASURES);
+        addStats(stats, { energy: -2, happiness: 4 });
+        effects.say(line('treasure'), 2);
+        setState('treasure', 2.2);
+      }
+      break;
+    case 'wash':
+      if (done) setState('eat', 2.5);
       break;
     case 'groom':
     case 'stretch':
@@ -233,7 +291,7 @@ function update(dt: number): void {
         effects.spawn('z', head.x, head.y - 4);
       }
       if (!awayNap && ((done && stats.energy > 85) || stateTime > 180)) {
-        effects.say(pick(['good nap!', '*stretch*', 'mrrp']), 2);
+        effects.say(line('wokeUp'), 2);
         setState('stretch', 2);
       }
       break;
@@ -246,7 +304,7 @@ function update(dt: number): void {
       pos.x = clampX(pos.x);
       if (done) {
         addStats(stats, { energy: -2, happiness: 2 });
-        if (Math.random() < 0.3) effects.say(pick(['got it!', 'pounce!', 'hehe']), 1.5);
+        if (Math.random() < 0.3) effects.say(line('played'), 1.5);
         setState('idle', rand(2, 5));
       }
       break;
@@ -254,10 +312,10 @@ function update(dt: number): void {
       if (done) {
         if (food === 'water') {
           addStats(stats, { hydration: 45, happiness: 3 });
-          effects.say(pick(['ahh~', 'refreshing!', 'thanks!']), 2);
+          effects.say(line('drank'), 2);
         } else {
           addStats(stats, { happiness: 15, energy: 5 });
-          effects.say(pick(['yum!', 'nom nom', 'more?']), 2);
+          effects.say(line('ate'), 2);
         }
         const head = headPoint(composeFrame(pet, 'stand', 'happy'));
         effects.spawn('note', head.x, head.y);
@@ -283,7 +341,7 @@ function update(dt: number): void {
       }
       break;
     case 'dragged':
-      break; // the mouse moves the cat
+      break; // the mouse moves the pet
   }
 
   // Blinking.
@@ -307,7 +365,13 @@ function currentEmotion(): Emotion {
     case 'stretch':
     case 'eat':
     case 'sleep':
+    case 'wash':
       return 'content';
+    case 'treasure':
+      return 'happy';
+    case 'rummage':
+    case 'sneak':
+      return 'neutral'; // busy, no blinking
     case 'yawn':
       return stateTime < 1.3 ? 'yawn' : 'content';
     case 'happy':
@@ -326,12 +390,12 @@ function currentEmotion(): Emotion {
     case 'crouch':
       return 'neutral'; // focused, no blinking
     default:
-      return blinkLeft > 0 ? 'blink' : restingMood(stats, isLateNight());
+      return blinkLeft > 0 ? 'blink' : restingMood(stats, isLateNight() && pet.personality.sleepyAtNight);
   }
 }
 
 function currentFrameName(): string {
-  const anim = pet.animations[ANIM[state]] ?? pet.animations.idle;
+  const anim = pet.animations[pet.poses?.[state] ?? ANIM[state]] ?? pet.animations.idle;
   return anim.frames[Math.floor(animTime * anim.fps) % anim.frames.length];
 }
 
@@ -349,6 +413,10 @@ function motionOffsets(): { hop: number; wiggle: number } {
       return { hop: Math.max(0, Math.sin(Math.min(stateTime / 0.3, 1) * Math.PI)) * 10, wiggle: 0 };
     case 'crouch':
       return { hop: 0, wiggle: Math.sin(stateTime * 28) * 1.5 };
+    case 'rummage':
+      return { hop: 0, wiggle: Math.sin(stateTime * 22) * 2 };
+    case 'treasure':
+      return { hop: Math.max(0, Math.sin(Math.min(stateTime / 0.35, 1) * Math.PI)) * 8, wiggle: 0 };
     default:
       return { hop: 0, wiggle: 0 };
   }
@@ -358,11 +426,19 @@ function render(): void {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const rect = petRect();
   const { hop, wiggle } = motionOffsets();
-  const grid = composeFrame(pet, currentFrameName(), currentEmotion());
+  const frameName = currentFrameName();
+  const grid = composeFrame(pet, frameName, currentEmotion());
 
   const ox = Math.round((rect.x + wiggle) * dpr);
   const oy = Math.round((rect.y - hop) * dpr);
   drawGrid(ctx, grid, ox, oy, px, facing === -1);
+
+  // What it dug up, held out in front of it.
+  const hold = pet.frames[frameName].hold;
+  if (state === 'treasure' && hold) {
+    const col = facing === 1 ? hold[0] : pet.width - hold[0] - treasure[0].length;
+    drawGrid(ctx, treasure, ox + col * px, oy + hold[1] * px, px, facing === -1);
+  }
 
   if (state === 'eat' || state === 'remindWater') {
     const bowl = food === 'water' || state === 'remindWater' ? PROPS.waterBowl : PROPS.foodBowl;
@@ -402,7 +478,7 @@ function petTheCat(): void {
 
   if (state === 'sleep') {
     awayNap = false;
-    effects.say(pick(['mrrp?!', 'huh?!', '…5 more minutes']), 1.8);
+    effects.say(line('poked'), 1.8);
     setState('surprised', 0.9);
     return;
   }
@@ -411,7 +487,7 @@ function petTheCat(): void {
     // You drank water: the cat drinks with you, and the reminder timer restarts.
     api.waterAck();
     food = 'water';
-    effects.say('cheers! 🥤', 2);
+    effects.say(line('cheers'), 2);
     setState('eat', 3);
     return;
   }
@@ -420,11 +496,11 @@ function petTheCat(): void {
   const head = headPoint(composeFrame(pet, 'stand', 'happy'));
   effects.spawn('heart', head.x + rand(-8, 8), head.y - 22);
   if (recentPets.length >= 8) {
-    effects.say(pick(['ok ok!', 'so much love!', 'purrrrr']), 2);
+    effects.say(line('pettedLots'), 2);
     recentPets = [];
   } else if (Math.random() < 0.3) {
     effects.spawn('note', head.x + 10, head.y);
-    if (!effects.saying) effects.say('purr~', 1.5);
+    if (!effects.saying) effects.say(line('petted'), 1.5);
   }
   setState('happy', 1.1);
   saveNow();
@@ -499,15 +575,17 @@ function handleAction(action: MenuAction): void {
       return setState('eat', 3);
     case 'treat':
       food = 'treat';
+      // Some pets wash their food before eating it.
+      if (pet.personality.washesFood && hasAnim('wash')) return setState('wash', 1.8);
       return setState('eat', 2.5);
     case 'play':
       if (stats.energy < 15) {
-        effects.say('too tired…', 2);
+        effects.say(line('tooTired'), 2);
         return setState('yawn', 1.8);
       }
-      return setState('crouch', 1);
+      return startPlay();
     case 'nap':
-      effects.say('nap time…', 2);
+      effects.say(line('napTime'), 2);
       return setState('sleep', rand(30, 90));
   }
 }
@@ -528,7 +606,7 @@ function handleEvent(e: PetEvent): void {
   switch (e.type) {
     case 'commit': {
       if (e.kind === 'amend') {
-        effects.say('amended ✨', 1.8);
+        effects.say(line('amended'), 1.8);
         if (!busy) setState('happy', 1.1);
         return;
       }
@@ -537,14 +615,14 @@ function handleEvent(e: PetEvent): void {
       addStats(stats, { happiness: 5 });
       let text: string;
       if (first) text = days > 1 ? `🔥 ${days}-day streak!` : '🔥 first commit today!';
-      else if (e.kind === 'merge') text = 'merged! 🎉';
-      else text = pick(['nice commit!', 'ship it! 🚀', `${e.repo} +1!`, `commit #${streak.commitsToday} today!`]);
+      else if (e.kind === 'merge') text = line('merged');
+      else text = line('commit', { repo: e.repo, n: streak.commitsToday });
       celebrate(text, first ? 28 : 18, 2);
       saveNow();
       return;
     }
     case 'push':
-      celebrate(pick(['pushed! 🚀', 'to the cloud! ☁️', 'shipped! 🎉']), 34, 2.4);
+      celebrate(line('push'), 34, 2.4);
       return;
     case 'away':
       if (busy) return;
@@ -555,29 +633,27 @@ function handleEvent(e: PetEvent): void {
     case 'back':
       if (!awayNap) return;
       awayNap = false;
-      effects.say(e.minutes >= 60 ? 'welcome back!' : pick(['oh hi!', "you're back!", 'mrrp!']), 2.5);
-      if (state === 'sleep') setState('stretch', 2);
+      // State first, so the state's own line can't replace the greeting.
+      if (state === 'sleep') hasAnim('upright') ? setState('look', 2) : setState('stretch', 2);
+      effects.say(line(e.minutes >= 60 ? 'backLong' : 'back'), 2.5);
       return;
     case 'breakDue':
-      effects.say(
-        pick([`${e.activeMinutes} min nonstop… stretch break? 🧘`, 'time to stretch! 🧘', 'rest your eyes a bit? 👀']),
-        7,
-      );
+      effects.say(line('breakDue', { minutes: e.activeMinutes }), 7);
       if (!busy && !awayNap) setState('stretch', 3);
       return;
     case 'breakTaken':
       addStats(stats, { happiness: 5 });
       if (!busy) setState('happy', 1.1);
-      effects.say(pick(['nice break! ✨', 'refreshed? 😺']), 2.5);
+      effects.say(line('breakTaken'), 2.5);
       return;
     case 'waterDue':
       if (busy || awayNap) return;
       setState('remindWater', 15);
-      effects.say('water break? 💧 click me when you drink!', 15);
+      effects.say(line('waterDue'), 15);
       return;
     case 'lateNight':
       if (!busy) setState('yawn', 1.8); // before the bubble, so the yawn's own "*yawn*" can't replace it
-      effects.say(pick(["it's late… sleep? 😴", 'bedtime, human 🌙', 'go to sleep! 💤']), 5);
+      effects.say(line('lateNight'), 5);
       return;
     case 'reposFound':
       effects.sayNext(
@@ -601,6 +677,9 @@ if (new URLSearchParams(location.search).has('debug')) {
       get frame() { return currentFrameName(); },
       get pos() { return { x: Math.round(pos.x), y: Math.round(pos.y), ground: Math.round(groundY()) }; },
       get streak() { return { ...streak, current: currentStreak(streak) }; },
+      get petId() { return pet.id; },
+      /** What the brain picks for the current stats at a given time of day. */
+      choose: (time: TimeOfDay) => chooseNext(stats, pet.personality, time),
       setState,
       doChoice,
       petTheCat,
@@ -661,10 +740,10 @@ async function start(): Promise<void> {
     if (saved.x !== null) pos.x = clampX(saved.x);
     const awayMinutes = (Date.now() - saved.lastSeen) / 60000;
     applyTimeAway(stats, awayMinutes);
-    if (awayMinutes > 8 * 60) effects.say('missed you!', 3.5);
-    else if (awayMinutes > 60) effects.say('welcome back!', 3);
+    if (awayMinutes > 8 * 60) effects.say(line('missedYou'), 3.5);
+    else if (awayMinutes > 60) effects.say(line('backLong'), 3);
   } else {
-    effects.say('hi! 👋', 3.5);
+    effects.say(line('hello'), 3.5);
   }
   if (streak.streakCount > 1 && currentStreak(streak) === 0) {
     effects.sayNext(`your ${streak.streakCount}-day streak ended… start a new one today? 🔥`, 4);

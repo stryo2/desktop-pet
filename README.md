@@ -4,6 +4,19 @@ A pixel cat that lives on your Windows taskbar. It walks, grooms, naps and pounc
 
 ![The cat walking, purring, grooming, celebrating a commit, drinking water with you and napping](docs/demo.gif)
 
+## Choose your pet
+
+Pick your pet in **Settings**, or under **Pet** in the right-click menu. Switching keeps your stats and streak.
+
+| | Cat | Raccoon |
+|---|---|---|
+| Character | calm, sweet, loves a nap | mischievous, nosy, a bit dramatic |
+| Night (1–5 AM) | gets sleepy | wide awake and extra playful (it still sends you to bed) |
+| Midday | business as usual | yawns and sneaks naps |
+| Habit | grooming | washing its paws, and its food before eating |
+| Play | pounces | rummages and digs up a treasure |
+| Extras | | stands up to sniff, sneaks around on tiptoe |
+
 ## Run it
 
 From source:
@@ -25,8 +38,8 @@ npm run dist
 
 - **Click** the cat to pet it (hearts, purrs; click a sleeping cat and it wakes up startled).
 - **Drag** it anywhere; it falls back onto the taskbar of that screen. Drop it from high up and it's surprised.
-- **Right-click** the cat (or the tray icon) to see its stats and to **Give water**, **Give a treat**, **Play**, **Nap time**, open **Settings…**, **Bring cat back** or **Quit**.
-- **Settings** has the cat's size, reminder times, **Start with Windows**, and your watched git repos. Changes apply immediately.
+- **Right-click** the cat (or the tray icon) to see its stats and to **Give water**, **Give a treat**, **Play**, **Nap time**, switch **Pet**, open **Settings…**, **Bring pet back** or **Quit**.
+- **Settings** has the pet picker, its size, reminder times, **Start with Windows**, and your watched git repos. Changes apply immediately.
 
 Clicks on the empty space around the cat pass straight through to the window behind it.
 
@@ -78,7 +91,7 @@ Settings live in `settings.json` next to `save.json` in `%APPDATA%\desktop-pet` 
 | Stats and how they change | `src/renderer/stats.ts` |
 | Face overlays, sprite drawing, props | `src/renderer/sprites.ts` |
 | Speech bubbles, hearts, Zzz's, notes | `src/renderer/effects.ts` |
-| Pet sprites, faces, animations | `pets/<id>/pet.json` |
+| Pet sprites, faces, animations and personality | `pets/<id>/pet.json` |
 
 Set `PET_DEBUG=1` to expose `window.petDebug` in the page for test scripts.
 
@@ -94,13 +107,17 @@ Each pet is one folder with a `pet.json`. No code changes needed.
    Draw poses **without eyes**: each frame's `face: [x, y]` says where the face overlay goes.
 3. Provide `faces` (`neutral`, `blink`, `happy`, `content`, `sleepy`, `sad`, `surprised`, `love`, `yawn`; `.` keeps the pixel underneath)
    and animations `idle`, `walk`, `sit`, `groom`, `sleep`, `stretch`, `crouch`, `leap`, `eat`, `dragged`, `fall`.
-4. Check it with:
+4. Give it a `personality`: how much it likes each action (`weights`), how that shifts at `night` and `midday`,
+   its stat `rates`, walking speed, and every line it says (`lines`). `pets/raccoon` shows the optional extras:
+   `rummage`, `wash`, `upright` and `sneak` animations, `poses` to swap an animation for a state, and a frame's
+   `hold: [x, y]` for where a found treasure is drawn.
+5. Check it with:
 
 ```bash
 npm run build && npm run check-pets
 ```
 
-Choosing which pet to show from a menu is planned for v2 (`PET_ID` in `src/main/main.ts` for now).
+A valid pet shows up in the picker by itself.
 
 ## Roadmap
 
@@ -108,4 +125,5 @@ Choosing which pet to show from a menu is planned for v2 (`PET_ID` in `src/main/
 - ~~**Week 3:** reactions to your day: late night, breaks, water, idle sleep, git commits~~ ✅
 - ~~**Week 4:** settings window, start with Windows, `.exe` installer, demo GIF~~ ✅
 - **Next:** code signing so the installer runs under Smart App Control
-- **v2:** pet picker, accessories, Pomodoro mode, visiting friends' pets
+- ~~Pet picker and a second pet (raccoon) with its own personality~~ ✅
+- **v2:** accessories, Pomodoro mode, visiting friends' pets

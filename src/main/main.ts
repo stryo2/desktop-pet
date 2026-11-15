@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { ActivityMonitor } from './activity.js';
 import type { PetEvent } from './events.js';
 import { defaultRepoRoots, findRepos, GitWatcher } from './gitWatcher.js';
-import { listPets, loadPet, type PetDef } from './petLoader.js';
+import { listPets, loadPet, petPreview, type PetDef } from './petLoader.js';
 import { parseSave, readSave, writeSave, type SaveData } from './save.js';
 import { LIMITS, mergeSettings, readSettings, writeSettings, type Settings } from './settings.js';
 
@@ -12,8 +12,7 @@ import { LIMITS, mergeSettings, readSettings, writeSettings, type Settings } fro
 // Test scripts (PET_DEBUG) choose their own folder.
 if (!process.env.PET_DEBUG) app.setPath('userData', path.join(app.getPath('appData'), 'desktop-pet'));
 
-// v2: read this from settings and let the user pick from listPets().
-const PET_ID = 'cat';
+const DEFAULT_PET = 'cat';
 
 const rootDir = path.join(__dirname, '..', '..');
 const petsDir = path.join(rootDir, 'pets');
@@ -22,6 +21,21 @@ let win: BrowserWindow | null = null;
 let settingsWin: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let petDef: PetDef;
+const pets = new Map<string, PetDef>(); // every valid pet in pets/, by id
+
+/** Loads every pet once. A broken pet is skipped with a clear error instead of stopping the app. */
+function loadPets(): void {
+  for (const id of listPets(petsDir)) {
+    try {
+      pets.set(id, loadPet(petsDir, id));
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : err);
+    }
+  }
+  const chosen = pets.get(settings.petId) ?? pets.get(DEFAULT_PET) ?? [...pets.values()][0];
+  if (!chosen) throw new Error(`No valid pets found in ${petsDir}`);
+  petDef = chosen;
+}
 
 // The window is a little bigger than the cat, leaving room above it for hops, hearts and speech bubbles.
 const MARGIN_W = 60;
@@ -88,6 +102,33 @@ function applyScale(oldScale: number): void {
   const y = b.y + old.h - next.h;
   moveTo(x, y);
   win.webContents.send('pet:scale', { scale: settings.catScale, bounds: win.getBounds() });
+}
+
+/** Swaps in another pet. It stays where it is, and keeps its stats and streak. */
+function setPet(id: string): void {
+  const next = pets.get(id);
+  if (!next || next.id === petDef.id) return;
+  const old = winSize();
+  petDef = next;
+  settings.petId = next.id;
+  saveSettings();
+  if (!win) return;
+
+  const b = win.getBounds();
+  const size = winSize();
+  const x = Math.round(b.x + old.w / 2 - size.w / 2);
+  moveTo(x, b.y + old.h - size.h);
+  if (lastSave) {
+    // The page starts again from the save, so make sure it has the spot the pet is in right now.
+    lastSave = { ...lastSave, petId: next.id, x, lastSeen: Date.now() };
+    try {
+      writeSave(savePath(), lastSave);
+    } catch (err) {
+      console.error('Could not save pet state:', err);
+    }
+  }
+  rendererReady = false;
+  win.webContents.reload();
 }
 
 // ---------- start with Windows ----------
@@ -214,6 +255,8 @@ function toggle(key: 'breakReminders' | 'waterReminders' | 'lateNightNudges'): v
 function settingsView() {
   return {
     ...settings,
+    petId: petDef.id,
+    pets: [...pets.values()].map(petPreview),
     repos: git?.watching ?? [],
     startWithWindows: getStartWithWindows(),
     limits: LIMITS,
@@ -234,7 +277,7 @@ function openSettings(): void {
   settingsWin = new BrowserWindow({
     width: 440,
     // Tall enough for everything; smaller screens get a scrollbar instead.
-    height: Math.min(770, screen.getPrimaryDisplay().workArea.height - 60),
+    height: Math.min(880, screen.getPrimaryDisplay().workArea.height - 60),
     useContentSize: true, // size the page area, not the outer frame
     title: 'Desktop Pet settings',
     resizable: false,
@@ -271,6 +314,7 @@ function registerSettingsIpc(): void {
     }
     saveSettings();
     applyScale(oldScale);
+    if (typeof p.petId === 'string') setPet(p.petId);
     return settingsView();
   });
 
@@ -346,10 +390,20 @@ function buildMenu(): Menu {
         },
       ],
     },
+    {
+      label: 'Pet',
+      visible: pets.size > 1,
+      submenu: [...pets.values()].map((p) => ({
+        label: p.name,
+        type: 'radio' as const,
+        checked: p.id === petDef?.id,
+        click: () => setPet(p.id),
+      })),
+    },
     { label: 'Settings…', click: () => openSettings() },
     { type: 'separator' },
     {
-      label: 'Bring cat back',
+      label: 'Bring pet back',
       click: () => {
         const p = homePosition();
         moveTo(p.x, p.y);
@@ -408,7 +462,7 @@ function createWindow(): void {
 function registerIpc(): void {
   ipcMain.handle('pet:load', () => petDef);
   ipcMain.handle('pet:getScale', () => settings.catScale);
-  ipcMain.handle('pet:list', () => listPets(petsDir));
+  ipcMain.handle('pet:list', () => [...pets.keys()]);
 
   ipcMain.handle('pet:getState', () => {
     const bounds = win ? win.getBounds() : { ...homePosition(), width: winSize().w, height: winSize().h };
@@ -487,7 +541,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(() => {
     settings = readSettings(settingsPath());
-    petDef = loadPet(petsDir, PET_ID);
+    loadPets();
     registerIpc();
     registerSettingsIpc();
     createWindow();
