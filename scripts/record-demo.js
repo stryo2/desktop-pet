@@ -1,6 +1,7 @@
-// Records docs/demo.gif: the cat walking, being petted, grooming, celebrating a commit,
-// drinking water with you and napping. Runs an invisible copy of the app with its own data folder.
-// Run: npm run demo-gif
+// Records docs/demo.gif (the cat) or docs/raccoon.gif (the raccoon): walking, being petted,
+// doing its own tricks, celebrating a commit and napping. Runs an invisible copy of the app with its own data folder.
+// Run: npm run demo-gif            (cat)
+//      npm run demo-gif -- raccoon (raccoon)
 const { app, BrowserWindow } = require('electron');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -13,7 +14,9 @@ const UPSCALE = 2; // crisp, bigger pixels in the README
 const BG = [244, 239, 230]; // warm paper background
 
 const userData = fs.mkdtempSync(path.join(os.tmpdir(), 'desktop-pet-demo-'));
-fs.writeFileSync(path.join(userData, 'settings.json'), JSON.stringify({ repos: [] })); // skip repo discovery
+const PET = process.argv.find((a) => a === 'raccoon') ? 'raccoon' : 'cat';
+const OUT = PET === 'cat' ? 'demo.gif' : `${PET}.gif`;
+fs.writeFileSync(path.join(userData, 'settings.json'), JSON.stringify({ repos: [], petId: PET })); // skip repo discovery
 app.setPath('userData', userData);
 process.env.PET_DEBUG = '1';
 app.on('browser-window-created', (_e, w) => w.setOpacity(0)); // nobody sees the recording cat
@@ -45,20 +48,35 @@ app.whenReady().then(async () => {
 
     await pet("setState('idle', 999)");
     await wait(4000); // let the greeting bubble finish
-    await pet("setState('walk', 999)");
-    await record(2);
-    await pet('petTheCat()');
-    await record(1.4);
-    await pet("setState('groom', 999)");
-    await record(1.6);
-    await pet("handleEvent({ type: 'commit', repo: 'my-app', kind: 'commit' })");
-    await record(2.4);
-    await pet("handleEvent({ type: 'waterDue' })");
-    await record(1.8);
-    await pet('petTheCat()'); // you drink, the cat drinks with you
-    await record(1.8);
-    await pet("setState('sleep', 999)");
-    await record(2.6);
+    if (PET === 'raccoon') {
+      await pet("setState('sneak', 999)");
+      await record(2);
+      await pet("setState('look', 999)");
+      await record(1.4);
+      await pet("handleAction('play')"); // rummages, then holds up a treasure
+      await record(4.2);
+      await pet("handleAction('treat')"); // washes its food first
+      await record(3);
+      await pet("handleEvent({ type: 'commit', repo: 'my-app', kind: 'commit' })");
+      await record(2.4);
+      await pet("setState('sleep', 999)");
+      await record(2.4);
+    } else {
+      await pet("setState('walk', 999)");
+      await record(2);
+      await pet('petTheCat()');
+      await record(1.4);
+      await pet("setState('groom', 999)");
+      await record(1.6);
+      await pet("handleEvent({ type: 'commit', repo: 'my-app', kind: 'commit' })");
+      await record(2.4);
+      await pet("handleEvent({ type: 'waterDue' })");
+      await record(1.8);
+      await pet('petTheCat()'); // you drink, the cat drinks with you
+      await record(1.8);
+      await pet("setState('sleep', 999)");
+      await record(2.6);
+    }
 
     // Encode: put each frame on the background, upscale with hard pixel edges, write the GIF.
     const gif = GIFEncoder();
@@ -82,9 +100,9 @@ app.whenReady().then(async () => {
     }
     gif.finish();
     fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
-    const out = path.join(root, 'docs', 'demo.gif');
+    const out = path.join(root, 'docs', OUT);
     fs.writeFileSync(out, gif.bytes());
-    console.log(`wrote docs/demo.gif (${frames.length} frames, ${(fs.statSync(out).size / 1024).toFixed(0)} KB)`);
+    console.log(`wrote docs/${OUT} (${frames.length} frames, ${(fs.statSync(out).size / 1024).toFixed(0)} KB)`);
     done(0);
   } catch (err) {
     console.error('record-demo failed:', err);
